@@ -1,7 +1,9 @@
 import socket
+import typing
+
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf, ZeroconfServiceTypes
 
-client: socket.socket | None = None
+client:  typing.Union[socket.socket, None] = None
 class MyListener(ServiceListener):
 
     def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
