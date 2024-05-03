@@ -1,0 +1,10 @@
+[Unit]
+Description=Client for copter show
+
+[Service]
+User=root
+WorkingDirectory=/etc/cshow/copter_client/
+ExecStart=/usr/bin/python3 main.py
+
+[Install]
+WantedBy=multi-user.target
