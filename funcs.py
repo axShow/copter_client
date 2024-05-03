@@ -70,3 +70,21 @@ def proccess(method: str, args: dict) -> dict:
         # destination: str
         # data: bytes
         file_trans(**args)
+    elif method == "connect_wifi":
+        # ARGS
+        # ssid: str
+        # password: str
+        # hostname: str
+        pass
+    elif method == "generate_map":
+        # ARGS
+        # size: float
+        # dist_x: float
+        # dist_y: float
+        # x_num: int
+        # y_num: int
+        # bottom_left: bool
+        # start_id: int
+        pass
+    else:
+        return {"result": False, "details": "command not found"}

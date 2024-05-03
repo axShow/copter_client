@@ -326,7 +326,7 @@ def reach_altitude(
     )
 
     telemetry = get_telemetry_locked(frame_id=frame_id)
-    rate = rospy.Rate(freq)
+    # rate = rospy.Rate(freq)
     time_start = time.time()
 
     while (abs(z - telemetry.z) > tolerance) or wait:
@@ -355,7 +355,7 @@ def reach_altitude(
                 )
                 # print('Reaching attitude timed out! | time: {:3f} seconds'.format(time_passed))
                 return wait
-        rate.sleep()
+        time.sleep(1 / FREQUENCY)
 
     logger.info("Altitude reached!")
     # print("Altitude reached!")
@@ -392,7 +392,7 @@ def land(
     # print("Land is started")
 
     telemetry = get_telemetry_locked(frame_id=frame_id_land)
-    rate = rospy.Rate(freq)
+    # rate = rospy.Rate(freq)
     time_start = time.time()
 
     while telemetry.armed:
@@ -416,7 +416,7 @@ def land(
                 # print("Landing timed out, disarming!!!")
                 arming(False)
                 return False, "timeout"
-        rate.sleep()
+        time.sleep(1 / FREQUENCY)
 
     logger.info("Landing succeeded!")
     # print("Landing succeeded!")
@@ -441,7 +441,7 @@ def takeoff(
         z=height, speed=speed, yaw=float("nan"), frame_id="body", auto_arm=True
     )
     # rospy.loginfo(result)
-    if not result.success:
+    if not result: #TODO: return to using result.success:
         return False, "not armed"
     # rospy.logdebug(result)
     while abs(climb - height) > tolerance:

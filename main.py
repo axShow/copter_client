@@ -6,11 +6,10 @@ from time import sleep
 import socket
 import connector
 import funcs
-import logging
+from loguru import logger
 from broadcast_receiver import broadcast
 from copterData import CopterData, Query, Response
 from utils import send_msg, recv_msg
-logging.basicConfig(level=logging.INFO)
 
 try:
     import rospy
@@ -37,19 +36,23 @@ def thread_2():
             try:
                 response = recv_msg(socket_r)
                 if response is not None:
-                    print(f'Received: "{response.decode("utf-16")}"')
+                    # print(f'Received: "{response.decode("utf-16")}"')
                     act = response.decode("utf-16")
                     if act == "ok": continue
+                    logger.info(f"Received {act}")
                     query = Query.parse_raw(act)
                     result = funcs.proccess(query.method_name, query.args)
                     response = Response(id=query.id, result=result)
                     send_msg(socket_r, response.json().encode("utf-16"))
+                    logger.info(f"Responsed {response}")
             except KeyboardInterrupt:
                 break
             except ConnectionResetError:
                 connector.client = None
+            except OSError:
+                pass
             except Exception as e:
-                print(e.args)
+                logger.exception(e)
 
 
 t: threading.Thread = threading.Thread(target=thread_2, daemon=True)
@@ -70,7 +73,7 @@ while True:
                 flight_mode=telem.mode)
             message = data.model_dump_json()
             send_msg(socket, message.encode("utf-16"))
-            print(f'Sending : "{message}"')
+            logger.info(f"Sended {message}")
 
         except KeyboardInterrupt:
             break
