@@ -7,7 +7,7 @@ from mavros_msgs.msg import State, ParamValue, Altitude
 from std_msgs.msg import Float64
 from pymavlink.dialects.v20 import common as mavlink
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 send_command_long = rospy.ServiceProxy('/mavros/cmd/command', CommandLong)
 get_param = rospy.ServiceProxy('/mavros/param/get', ParamGet)

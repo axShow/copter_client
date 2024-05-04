@@ -1,10 +1,22 @@
 import socket
+from time import sleep
+
+from loguru import logger
+
 import connector
 
 
 def broadcast():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind(('0.0.0.0', 9002))
+    while True:
+        try:
+            s.bind(('0.0.0.0', 9002))
+            logger.info("Started broadcast receiver")
+            break
+        except OSError:
+            logger.error("Broadcasting port is busy!")
+            sleep(5)
+            continue
     magic_bytes = bytes.fromhex("beef")
     server_name = "CopterShow"
     while True:

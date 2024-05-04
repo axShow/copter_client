@@ -1,16 +1,13 @@
-import random
-import struct
+from loguru import logger
+logger.add('copterClient.log', level='INFO')
+logger.info("Starting client up...")
 import threading
-import time
 from time import sleep
 import socket
-import connector
 import funcs
-from loguru import logger
-from broadcast_receiver import broadcast
+import connector
 from copterData import CopterData, Query, Response
 from utils import send_msg, recv_msg
-
 try:
     import rospy
     from clover import srv
@@ -21,20 +18,20 @@ try:
 except ImportError:
     from faker import get_telemetry
 
+#
+# def file(name: str, data: str):
+#     data_bytes: bytes = data.encode("utf-16")
+#     print(f"writing {name} with {data_bytes.__sizeof__()} bytes")
+#     with open(name, "wb") as file:
+#         file.write(data_bytes)
 
-def file(name: str, data: str):
-    data_bytes: bytes = data.encode("utf-16")
-    print(f"writing {name} with {data_bytes.__sizeof__()} bytes")
-    with open(name, "wb") as file:
-        file.write(data_bytes)
 
-
-def thread_2():
+def receiver():
+    logger.info("Started messages receiver thread")
     while True:
-        socket_r = connector.client
-        if socket_r is not None:
+        if connector.client is not None:
             try:
-                response = recv_msg(socket_r)
+                response = recv_msg(connector.client)
                 if response is not None:
                     # print(f'Received: "{response.decode("utf-16")}"')
                     act = response.decode("utf-16")
@@ -43,27 +40,24 @@ def thread_2():
                     query = Query.parse_raw(act)
                     result = funcs.proccess(query.method_name, query.args)
                     response = Response(id=query.id, result=result)
-                    send_msg(socket_r, response.json().encode("utf-16"))
-                    logger.info(f"Responsed {response}")
+                    send_msg(connector.client, response.json().encode("utf-16"))
+                    logger.debug(f"Responsed {response}")
             except KeyboardInterrupt:
                 break
             except ConnectionResetError:
-                connector.client = None
+                pass
             except OSError:
                 pass
             except Exception as e:
-                logger.exception(e)
+                logger.exception(e.args[0])
 
 
-t: threading.Thread = threading.Thread(target=thread_2, daemon=True)
+t: threading.Thread = threading.Thread(target=receiver, daemon=True)
 t.start()
-t2: threading.Thread = threading.Thread(target=broadcast, daemon=True)
-t2.start()
 name = socket.gethostname()
 while True:
-    socket = connector.client
     # print(socket)
-    if socket is not None:
+    if connector.client is not None:
         try:
             telem = get_telemetry()
             data = CopterData(
@@ -72,20 +66,36 @@ while True:
                 controller_state=str(telem.connected),
                 flight_mode=telem.mode)
             message = data.model_dump_json()
-            send_msg(socket, message.encode("utf-16"))
-            logger.info(f"Sended {message}")
+            send_msg(connector.client, message.encode("utf-16"))
+            logger.debug(f"Sended {message}")
 
         except KeyboardInterrupt:
+            logger.info("Shutting down")
             break
         except ConnectionResetError:
             connector.client = None
+            logger.warning("Disconnected...")
             # connector.restart()
         except OSError:
+            logger.warning("Disconnected...")
             pass
+        except Exception as e:
+            logger.exception(e.args[0])
 
-        sleep(1)
+        try:
+            sleep(1)
+        except KeyboardInterrupt:
+            logger.info("Shutting down")
+            break
         # except rospy.service.ServiceException: pass
     else:
-        sleep(5)
-connector.client.close()
+        try:
+            sleep(5)
+        except KeyboardInterrupt:
+            logger.info("Shutting down")
+            break
+try:
+    connector.client.close()
+except AttributeError:
+    pass
 # __TAURI_INVOKE__("send_action", {addrName: "ADX", query: {id: 12345, method_name: "land", args: {}}})

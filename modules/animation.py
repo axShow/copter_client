@@ -7,7 +7,7 @@ import numpy
 import logging
 import threading
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # Import flight control
 try:

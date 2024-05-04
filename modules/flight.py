@@ -1,13 +1,9 @@
 #!/usr/bin/python
 from __future__ import print_function
-import sys
 import math
 import time
-import logging
 import threading
-from typing import Tuple
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 try:
     import rospy
     from clover import srv
@@ -25,7 +21,7 @@ try:
     landing = rospy.ServiceProxy("/land", Trigger)
     emergency_land = rospy.ServiceProxy("/emergency_land", Trigger)
 except ImportError:
-    import faker
+    from client import faker
 
     navigate = faker.navigate
     set_position = faker.set_position

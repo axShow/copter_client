@@ -6,7 +6,7 @@ import threading
 import collections
 import itertools
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 Task = collections.namedtuple("Task", ["func", "args", "kwargs", "delayable", ])
 
 INTERRUPTER = threading.Event()

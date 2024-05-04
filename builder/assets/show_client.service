@@ -1,9 +1,9 @@
 [Unit]
-Description=Client for copter show
+Description=Client for copter axshow
 
 [Service]
 User=root
-WorkingDirectory=/etc/cshow/copter_client/
+WorkingDirectory=/etc/axshow/client/
 ExecStart=/usr/bin/python3 main.py
 
 [Install]

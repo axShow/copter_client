@@ -11,7 +11,7 @@ def get_telemetry(*args, **kwargs):
 
 
 def navigate(*args, **kwargs):
-    logger.info(f"Navigating to Flight Mode, parameters: {args}, {kwargs}")
+    logger.info(f"Navigating, parameters: {args}, {kwargs}")
     try:
         if kwargs["auto_arm"]:
             arming(True)

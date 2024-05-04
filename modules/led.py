@@ -1,13 +1,12 @@
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 try:
     import rospy
     from clover.srv import SetLEDEffect
 
     set_effect_service = rospy.ServiceProxy('led/set_effect', SetLEDEffect)
 except ImportError:
-    import faker
+    from client import faker
+
     set_effect_service = faker.set_effect_service
 
 def set_effect(*args, **kwargs) -> tuple[bool, str]:
