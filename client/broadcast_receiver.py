@@ -29,6 +29,6 @@ def broadcast():
                 port = int.from_bytes(data[0][2:4], byteorder="big")
                 address = data[1][0]
                 if connector.client is None:
-                    print("Connecting to:", address, port)
+                    logger.info(f"Connecting to {address}:{port}")
                     connector.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     connector.client.connect((address, port))

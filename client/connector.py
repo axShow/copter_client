@@ -21,13 +21,15 @@ try:
             if len(info.parsed_addresses()) > 0:
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client.connect((info.parsed_addresses()[0], info.port))
-            print(f"Service {name} updated")
+            logger.info(f"Service {name} updated")
+            # print(f"Service {name} updated")
 
         def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             global client
             if client is not None: client.close()
             client = None
-            print(f"Service {name} removed")
+            logger.warning("Disconnected...")
+            # print(f"Service {name} removed")
 
         def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             global client
@@ -39,7 +41,8 @@ try:
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if len(info.parsed_addresses()) > 0:
                     client.connect((info.parsed_addresses()[0], info.port))
-            print(f"Service {name} added, service info: {info}")
+            logger.info(f"Service {name} added")
+            # print(f"Service {name} added, service info: {info}")
 
 
     zeroconf = Zeroconf()

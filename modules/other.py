@@ -1,3 +1,5 @@
+import subprocess
+
 try:
     import modules.mavros_wrapper as mavros
 except ImportError:
@@ -7,6 +9,17 @@ except ImportError:
 
 def reboot_fcu():
     mavros.reboot_fcu()
+
+
+def reboot_system():
+    subprocess.call(['sudo', 'reboot'])
+
+
+def restart_service():
+    subprocess.call(['sudo', 'systemctl', 'restart', 'show_client.service'])
+
+def stop_service():
+    subprocess.call(['sudo', 'systemctl', 'stop', 'show_client.service'])
 
 
 def calibrate_gyro() -> str:

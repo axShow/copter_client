@@ -440,6 +440,7 @@ def takeoff(
     if not result: #TODO: return to using result.success:
         return False, "not armed"
     # rospy.logdebug(result)
+    logger.info("Takeoff to {:.2f} of {:.2f} meters".format(climb, height))
     while abs(climb - height) > tolerance:
         if interrupter.is_set():
             logger.warning("Flight function interrupted!")
@@ -447,7 +448,6 @@ def takeoff(
             return False, "interrupted"
 
         climb = abs(get_telemetry_locked(frame_id=frame_id).z - start.z)
-        logger.info("Takeoff to {:.2f} of {:.2f} meters".format(climb, height))
 
         time_passed = time.time() - time_start
 

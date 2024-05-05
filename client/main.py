@@ -38,7 +38,11 @@ def receiver():
                     if act == "ok": continue
                     logger.info(f"Received {act}")
                     query = Query.parse_raw(act)
-                    result = funcs.proccess(query.method_name, query.args)
+                    try:
+                        result = funcs.proccess(query.method_name, query.args)
+                    except Exception as e:
+                        logger.exception(e.args[0])
+                        result = {"result": False, "error": e.args[0]}
                     response = Response(id=query.id, result=result)
                     send_msg(connector.client, response.json().encode("utf-16"))
                     logger.debug(f"Responsed {response}")

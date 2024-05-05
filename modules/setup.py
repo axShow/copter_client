@@ -1,5 +1,10 @@
+import socket
+import subprocess
 import xml.etree.ElementTree as ET
-from typing import Literal
+from typing import Literal, Union
+
+from loguru import logger
+
 try:
     import rospy
     from mavros_msgs.srv import ParamSet, ParamGet
@@ -8,11 +13,17 @@ try:
     param_set = rospy.ServiceProxy("mavros/param/set", ParamSet)
     param_get = rospy.ServiceProxy("mavros/param/get", ParamGet)
 except ImportError:
-    pass #TODO: create faker
+    pass  # TODO: create faker
 cam_path = "/home/pi/catkin_ws/src/clover/clover/launch/main_camera.launch"
 clover_path = "/home/pi/catkin_ws/src/clover/clover/launch/clover.launch"
 aruco_path = "/home/pi/catkin_ws/src/clover/clover/launch/aruco.launch"
 led_path = "/home/pi/catkin_ws/src/clover/clover/launch/led.launch"
+
+
+def connect_wifi(ssid: str, password: str, hostname: Union[str, None]):
+    logger.warning(subprocess.run(["client-setup", ssid, password,
+                                   hostname if hostname is not None else socket.gethostname()],
+                                  shell=True))
 
 
 def run_setup(

@@ -1,4 +1,4 @@
-pydantic~=2.6.4
-loguru~=0.7.2
-numpy~=1.26.4
-zeroconf~=0.131.0
+pydantic~=2.5.3
+loguru
+numpy
+zeroconf

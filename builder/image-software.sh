@@ -63,7 +63,7 @@ chrony \
 
 echo_stamp "Install python libs"
 cd /etc/axshow/client/
-my_travis_retry pip install -r requirements.txt
+my_travis_retry pip3 install -r requirements.txt
 
 echo_stamp "Install catkin packages"
 cd /home/pi/catkin_ws/src
@@ -73,8 +73,8 @@ source devel/setup.bash
 catkin_make --pkg clever_flight_routines
 source devel/setup.bash
 
-echo_stamp "Change ax-show and catkin_ws owner to pi"
-chown -Rf pi:pi /etc/axshow/client/
+echo_stamp "Change axshow and catkin_ws owner to pi"
+chown -Rf pi:pi /etc/axshow/
 chown -Rf pi:pi /home/pi/catkin_ws/
 
 echo_stamp "End of software installation"

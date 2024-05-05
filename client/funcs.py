@@ -1,6 +1,15 @@
 from modules import led, setup
 from modules.flight import *
-from modules.other import calibrate_gyro, calibrate_level, file_trans
+from modules.other import (
+    calibrate_gyro,
+    calibrate_level,
+    file_trans,
+    reboot_fcu,
+    reboot_system,
+    restart_service,
+    stop_service,
+)
+from modules.setup import connect_wifi
 
 
 def proccess(method: str, args: dict) -> dict:
@@ -16,6 +25,18 @@ def proccess(method: str, args: dict) -> dict:
         # interrupter = INTERRUPTER
         res, details = land(**args)
         return {"result": res, "details": details}
+    elif method == "emergency_land":
+        # ARGS:
+        # descend = (True,)
+        # z = (Z_DESCEND,)
+        # frame_id_descend = (FRAME_ID,)
+        # frame_id_land = (FRAME_ID,)
+        # timeout_descend = (TIMEOUT_DESCEND,)
+        # timeout_land = (TIMEOUT_LAND,)
+        # freq = (FREQUENCY,)
+        # interrupter = INTERRUPTER
+        res = emergency_land(**args)
+        return {"result": True, "details": str(res)}
     elif method == "takeoff":
         # ARGS
         # height = (TAKEOFF_HEIGHT,)
@@ -48,6 +69,7 @@ def proccess(method: str, args: dict) -> dict:
         # rangefinder: bool = (False,)
         # enable_aruco: bool = (True,)
         # cam_direction: Literal["backward", "forward"] = "backward"
+        # setup_flight_controller: bool = False
         setup.run_setup(**args)
         return {"result": True, "details": "Unknown"}
     elif method == "set_arming":
@@ -75,7 +97,8 @@ def proccess(method: str, args: dict) -> dict:
         # ssid: str
         # password: str
         # hostname: str
-        pass
+        connect_wifi(**args)
+        return {"result": True, "details": "connecting"}
     elif method == "generate_map":
         # ARGS
         # size: float
@@ -86,5 +109,17 @@ def proccess(method: str, args: dict) -> dict:
         # bottom_left: bool
         # start_id: int
         pass
+    if method == "reboot_fcu":
+        reboot_fcu()
+        return {"result": True, "details": "success"}
+    if method == "reboot_system":
+        reboot_system()
+        return {"result": True, "details": "success"}
+    if method == "restart_client":
+        restart_service()
+        return {"result": True, "details": "success"}
+    if method == "kill_client":
+        stop_service()
+        return {"result": True, "details": "success"}
     else:
         return {"result": False, "details": "command not found"}
