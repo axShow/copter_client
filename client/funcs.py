@@ -1,18 +1,10 @@
-from modules import led, setup
 from modules.flight import *
-from modules.other import (
-    calibrate_gyro,
-    calibrate_level,
-    file_trans,
-    reboot_fcu,
-    reboot_system,
-    restart_service,
-    stop_service,
-)
+from modules import led, setup
+from modules.other import *
 from modules.setup import connect_wifi
 
 
-def proccess(method: str, args: dict) -> dict:
+async def proccess(method: str, args: dict) -> dict:
     if method == "land":
         # ARGS:
         # descend = (True,)
@@ -23,7 +15,7 @@ def proccess(method: str, args: dict) -> dict:
         # timeout_land = (TIMEOUT_LAND,)
         # freq = (FREQUENCY,)
         # interrupter = INTERRUPTER
-        res, details = land(**args)
+        res, details = await land(**args)
         return {"result": res, "details": details}
     elif method == "emergency_land":
         # ARGS:
@@ -46,7 +38,7 @@ def proccess(method: str, args: dict) -> dict:
         # timeout_takeoff = (TIMEOUT,)
         # interrupter = (INTERRUPTER,)
         # emergency_land = (False,)
-        res, details = takeoff(**args)
+        res, details = await takeoff(**args)
         return {"result": res, "details": details}
     elif method == "led":
         # ARGS
@@ -120,6 +112,9 @@ def proccess(method: str, args: dict) -> dict:
         return {"result": True, "details": "success"}
     if method == "kill_client":
         stop_service()
+        return {"result": True, "details": "success"}
+    if method == "self_check":
+        selfcheck()
         return {"result": True, "details": "success"}
     else:
         return {"result": False, "details": "command not found"}

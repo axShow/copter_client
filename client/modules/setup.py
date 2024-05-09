@@ -22,8 +22,7 @@ led_path = "/home/pi/catkin_ws/src/clover/clover/launch/led.launch"
 
 def connect_wifi(ssid: str, password: str, hostname: Union[str, None]):
     logger.warning(subprocess.run(["client-setup", ssid, password,
-                                   hostname if hostname is not None else socket.gethostname()],
-                                  shell=True))
+                                   hostname if hostname is not None else socket.gethostname()]))
 
 
 def run_setup(

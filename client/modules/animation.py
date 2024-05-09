@@ -1,23 +1,21 @@
-import os
 import csv
 import copy
 import math
 import time
 import numpy
-import logging
 import threading
 
 from loguru import logger
 
 # Import flight control
 try:
-    import modules.flight as flight
+    from client import modules as flight, modules as led
 except ImportError:
     logger.debug("Can't import flight control module!")
 
 # Import led control
 try:
-    import modules.led as led
+    pass
 except ImportError:
     logger.debug("Can't import led control module!")
 

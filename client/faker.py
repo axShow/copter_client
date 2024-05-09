@@ -2,7 +2,7 @@ import random
 import logging
 from copterData import TelemetryData, FlightMode
 logger = logging.getLogger(__name__)
-data = TelemetryData(voltage=0.0, mode=FlightMode.MANUAL, armed=False)
+data = TelemetryData(voltage=0, mode=FlightMode.MANUAL, armed=False)
 
 
 def get_telemetry(*args, **kwargs):

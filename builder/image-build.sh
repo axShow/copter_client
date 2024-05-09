@@ -114,7 +114,7 @@ losetup -d ${DEV_IMAGE}
 img-chroot ${IMAGE_PATH} exec ${SCRIPTS_DIR}'/image-software.sh'
 
 # Copy service files for clever show client and visual_pose_watchdog
-img-chroot ${IMAGE_PATH} copy ${SCRIPTS_DIR}'/assets/show_client.service' '/lib/systemd/system/'
+img-chroot ${IMAGE_PATH} copy ${SCRIPTS_DIR}'/assets/axshow_client.service' '/lib/systemd/system/'
 #img-chroot ${IMAGE_PATH} copy ${SCRIPTS_DIR}'/assets/failsafe.service' '/lib/systemd/system/' TODO: write failsafe
 
 # Copy client-setup script to /usr/local/bin to provide wide access

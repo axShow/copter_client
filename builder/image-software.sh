@@ -74,7 +74,7 @@ catkin_make --pkg clever_flight_routines
 source devel/setup.bash
 
 echo_stamp "Change axshow and catkin_ws owner to pi"
-chown -Rf pi:pi /etc/axshow/
+#chown -Rf pi:pi /etc/axshow/
 chown -Rf pi:pi /home/pi/catkin_ws/
 
 echo_stamp "End of software installation"

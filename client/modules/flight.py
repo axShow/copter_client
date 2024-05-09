@@ -1,9 +1,13 @@
 #!/usr/bin/python
 from __future__ import print_function
+
+import asyncio
 import math
 import time
 import threading
 from loguru import logger
+from typing import Tuple
+
 try:
     import rospy
     from clover import srv
@@ -21,7 +25,7 @@ try:
     landing = rospy.ServiceProxy("/land", Trigger)
     emergency_land = rospy.ServiceProxy("/emergency_land", Trigger)
 except ImportError:
-    from client import faker
+    import faker
 
     navigate = faker.navigate
     set_position = faker.set_position
@@ -362,7 +366,7 @@ def stop(frame_id="body", hold_speed=SPEED):
     navigate(frame_id=frame_id, yaw=float("nan"), speed=hold_speed)
 
 
-def land(
+async def land(
     descend=True,
     z=Z_DESCEND,
     frame_id_descend=FRAME_ID,
@@ -371,7 +375,7 @@ def land(
     timeout_land=TIMEOUT_LAND,
     freq=FREQUENCY,
     interrupter=INTERRUPTER,
-) -> tuple[bool, str]:
+) -> Tuple[bool, str]:
     reset_delta()
     if descend:
         logger.info("Descending to: | z: {:.3f}".format(z))
@@ -412,14 +416,14 @@ def land(
                 # print("Landing timed out, disarming!!!")
                 arming(False)
                 return False, "timeout"
-        time.sleep(1 / FREQUENCY)
+        await asyncio.sleep(1 / FREQUENCY)
 
     logger.info("Landing succeeded!")
     # print("Landing succeeded!")
     return True, "success"
 
 
-def takeoff(
+async def takeoff(
     height=TAKEOFF_HEIGHT,
     speed=TAKEOFF_SPEED,
     tolerance=TOLERANCE,
@@ -427,7 +431,7 @@ def takeoff(
     timeout_takeoff=TIMEOUT,
     interrupter=INTERRUPTER,
     emergency_land=False,
-) -> tuple[bool, str]:
+) -> Tuple[bool, str]:
     logger.info("Takeoff started...")
     # rate = rospy.Rate(FREQUENCY)
     start = get_telemetry_locked(frame_id=frame_id)
@@ -461,14 +465,14 @@ def takeoff(
                 return False, "timeout"
 
         # rate.sleep()
-        time.sleep(1 / FREQUENCY)
+        await asyncio.sleep(1 / FREQUENCY)
     logger.info("Takeoff succeeded!")
     return True, "success"
 
 
-def flip(
+async def flip(
     min_z=FLIP_MIN_Z, frame_id=FRAME_ID
-) -> tuple[bool, str]:  # TODO Flip in different directions
+) -> Tuple[bool, str]:  # TODO Flip in different directions
     logger.info("Flip started!")
 
     start_telemetry = get_telemetry_locked(
@@ -482,7 +486,7 @@ def flip(
     else:
         # Flip!
         set_rates(thrust=1)  # bump up
-        rospy.sleep(0.2)
+        await asyncio.sleep(0.2)
 
         set_rates(roll_rate=30, thrust=0.2)  # maximum roll rate
 

@@ -7,10 +7,12 @@ from loguru import logger
 from broadcast_receiver import broadcast
 
 client: typing.Union[socket.socket, None] = None
+
 try:
+    # import dont_use_zeroconf
+    # if you want to use mdns as main method for finding server, remove the previous line
+
     from zeroconf import ServiceBrowser, ServiceListener, Zeroconf, ZeroconfServiceTypes, DNSCache
-
-
 
 
     class MyListener(ServiceListener):
@@ -48,9 +50,9 @@ try:
     zeroconf = Zeroconf()
     listener = MyListener()
     browser = ServiceBrowser(zeroconf, "_cshow._tcp.local.", listener)
-    logger.info("Started zeroconf listener")
+    # logger.info("Started zeroconf listener")
 except ImportError:
-    logger.warning("Zeroconf not installed, using broadcast receiver")
+    logger.warning("Can't use zeroconf, using broadcast receiver")
     t2: threading.Thread = threading.Thread(target=broadcast, daemon=True)
     t2.start()
 # print('\n'.join(ZeroconfServiceTypes.find()))
@@ -75,6 +77,8 @@ s.send(message.encode('utf-8'))
 response = s.recv(1024)
 print(f'Received: "{response}"')
 s.send("!quit".encode('utf-8'))"""
+
+
 def is_socket_closed(sock: socket.socket) -> bool:
     try:
         # this will try to read bytes without blocking and also without removing them from buffer (peek only)

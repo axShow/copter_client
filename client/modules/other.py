@@ -1,7 +1,7 @@
 import subprocess
 
 try:
-    import modules.mavros_wrapper as mavros
+    import mavros
 except ImportError:
     pass
     #TODO: make faker
@@ -16,10 +16,10 @@ def reboot_system():
 
 
 def restart_service():
-    subprocess.call(['sudo', 'systemctl', 'restart', 'show_client.service'])
+    subprocess.call(['sudo', 'systemctl', 'restart', 'axshow_client.service'])
 
 def stop_service():
-    subprocess.call(['sudo', 'systemctl', 'stop', 'show_client.service'])
+    subprocess.call(['sudo', 'systemctl', 'stop', 'axshow_client.service'])
 
 
 def calibrate_gyro() -> str:
