@@ -7,4 +7,4 @@
 - clone this repo to copter
 - install requirements from requirements.txt
 - copy systemd service
-- setting up copter in server-app
+- setting up copter in AX Show controller
