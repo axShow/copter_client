@@ -65,7 +65,7 @@ def set_mode(*args, **kwargs):
 
 
 def arming(state: bool, *args, **kwargs):
-    logger.info(f"Arming mode, parameters: {state=}, {args}, {kwargs}")
+    logger.info(f"Arming mode, parameters: {state}, {args}, {kwargs}")
     data.armed = state
 
 

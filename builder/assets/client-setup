@@ -61,8 +61,8 @@ $3
 EOF
 
 # enable clever show service and failsafe service
-systemctl enable clever-show.service
-systemctl enable failsafe.service
+systemctl enable axshow_client.service
+#systemctl enable failsafe.service
 
 # restart clever
 reboot

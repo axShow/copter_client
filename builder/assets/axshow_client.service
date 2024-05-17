@@ -1,12 +1,14 @@
 [Unit]
 Description=Client for copter axshow
-Requires=roscore.service
-After=clover.service
+Requires=roscore.service network.target network-online.target
+After=clover.service network.target network-online.target
 
 [Service]
 User=root
 WorkingDirectory=/etc/axshow/client/
-ExecStart=/usr/bin/python3 main.py
+# ExecStartPre=/bin/sleep 15
+ExecStart=/bin/bash -c ". /home/pi/catkin_ws/devel/setup.sh; \
+                        /usr/bin/python3 /etc/axshow/client/main.py"
 KillSignal=SIGKILL
 Restart=on-failure
 RestartSec=3

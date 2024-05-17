@@ -1,15 +1,15 @@
 import socket
 import threading
-import typing
+import typing_extensions
 
 from loguru import logger
 
 from broadcast_receiver import broadcast
 
-client: typing.Union[socket.socket, None] = None
+client: typing_extensions.Union[socket.socket, None] = None
 
 try:
-    # import dont_use_zeroconf
+    import dont_use_zeroconf
     # if you want to use mdns as main method for finding server, remove the previous line
 
     from zeroconf import ServiceBrowser, ServiceListener, Zeroconf, ZeroconfServiceTypes, DNSCache

@@ -1,7 +1,7 @@
 import socket
 import subprocess
 import xml.etree.ElementTree as ET
-from typing import Literal, Union
+from typing_extensions import Literal, Union
 
 from loguru import logger
 

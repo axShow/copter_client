@@ -13,7 +13,7 @@ import connector
 from copterData import CopterData, Query, Response
 from utils import send_msg, recv_msg
 
-name = socket.gethostname()
+name = "AXSHOW-8392"#socket.gethostname()
 try:
     import rospy
     from clover import srv

@@ -1,7 +1,7 @@
 import subprocess
 
 try:
-    import mavros
+    from modules import mavros_wrapper as mavros
 except ImportError:
     pass
     #TODO: make faker

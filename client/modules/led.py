@@ -1,5 +1,5 @@
 from loguru import logger
-from typing import Tuple
+from typing_extensions import Tuple
 
 try:
     import rospy
