@@ -18,6 +18,10 @@ def reboot_system():
 def restart_service():
     subprocess.call(['sudo', 'systemctl', 'restart', 'axshow_client.service'])
 
+
+def restart_clover():
+    subprocess.call(['sudo', 'systemctl', 'restart', 'clover.service'])
+
 def stop_service():
     subprocess.call(['sudo', 'systemctl', 'stop', 'axshow_client.service'])
 

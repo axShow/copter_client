@@ -1,4 +1,5 @@
 import asyncio
+import random
 from signal import SIGINT, SIGTERM, signal
 
 from loguru import logger
@@ -13,7 +14,7 @@ import connector
 from copterData import CopterData, Query, Response
 from utils import send_msg, recv_msg
 
-name = "AXSHOW-8392"#socket.gethostname()
+name = socket.gethostname()
 try:
     import rospy
     from clover import srv
@@ -22,6 +23,7 @@ try:
     rospy.init_node("my_node")
     get_telemetry = rospy.ServiceProxy("get_telemetry", srv.GetTelemetry)
 except ImportError:
+    name = "AXSHOW-" + str(random.randint(1111, 9999))
     from faker import get_telemetry
 
 
@@ -109,12 +111,12 @@ async def sender():
 
 
 def raise_graceful_exit(*args):
-    loop.stop()
-    print("Gracefully shutdown")
-    try:
-        connector.client.close()
-    except AttributeError:
-        pass
+    # loop.stop()
+    logger.warning("Gracefully shutdown")
+    # try:
+    #     connector.client.close()
+    # except AttributeError:
+    #     pass
     raise SystemExit()
 
 loop = asyncio.new_event_loop()
@@ -125,8 +127,11 @@ for type_sig in [SIGINT, SIGTERM]:
     signal(type_sig, raise_graceful_exit)
 try:
     loop.run_until_complete(gather)
+except SystemExit:
+    pass
 finally:
-    loop.close()
+    logger.info("Stopping loop")
+    loop.stop()
     try:
         connector.client.close()
     except AttributeError:

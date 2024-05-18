@@ -62,7 +62,7 @@ Z_DESCEND = 0.5
 TAKEOFF_HEIGHT = 1.0
 FRAME_ID = "map"
 INTERRUPTER = threading.Event()
-FLIP_MIN_Z = 2.0
+FLIP_MIN_Z = 1.0
 
 checklist = []
 get_telemetry_lock = threading.Lock()
@@ -489,12 +489,18 @@ async def flip(
         await asyncio.sleep(0.2)
 
         set_rates(roll_rate=30, thrust=0.2)  # maximum roll rate
-
+        timed = 0
         while True:
             telem = get_telemetry_locked()
 
             if abs(telem.roll) > math.pi / 2:
                 break
+            
+            await asyncio.sleep(0.001)
+            timed += 0.001
+            if timed > 1.5:
+                logger.warning("Flip timeout")
+                return False, "roll changes timeouted"
 
         logger.info("Flip succeeded!")
         # print('Flip succeeded!')

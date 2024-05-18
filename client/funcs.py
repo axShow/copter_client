@@ -71,7 +71,7 @@ async def proccess(method: str, args: dict) -> dict:
     elif method == "flip":
         # min_z: float
         # frame_id
-        res, details = flip(**args)
+        res, details = await flip(**args)
         return {"result": res, "details": details}
     elif method == "calibrate_gyro":
         details = calibrate_gyro()
@@ -109,6 +109,9 @@ async def proccess(method: str, args: dict) -> dict:
         return {"result": True, "details": "success"}
     if method == "restart_client":
         restart_service()
+        return {"result": True, "details": "success"}
+    if method == "restart_clover":
+        restart_clover()
         return {"result": True, "details": "success"}
     if method == "kill_client":
         stop_service()

@@ -66,7 +66,6 @@ cd /etc/axshow/client/
 my_travis_retry pip3 install -r requirements.txt
 
 echo_stamp "enabling axshow_client service"
-systemctl enable axshow_client
 
 echo_stamp "Install catkin packages"
 cd /home/pi/catkin_ws/src
