@@ -3,6 +3,44 @@ from typing_extensions import Union
 
 from pydantic import BaseModel, Field
 
+class Coefficents(BaseModel):
+    MC_ROLLRATE_P: float
+    MC_ROLLRATE_I: float
+    MC_ROLLRATE_D: float
+    MC_PITCHRATE_P: float
+    MC_PITCHRATE_I: float
+    MC_PITCHRATE_D: float
+    MPC_XY_VEL_P: float
+    MPC_Z_VEL_P: float
+    MPC_THR_HOVER: float
+
+class LPEFusion(BaseModel):
+    GPS: bool = Field(False)
+    OpticalFlow: bool = Field(False)
+    VisionPosition: bool = Field(False)
+    LandingTarget: bool = Field(False)
+    LandDetector: bool = Field(False)
+    PubAglAsLposDown: bool = Field(False)
+    FlowGyroCompensation: bool = Field(False)
+    Baro: bool = Field(False)
+
+    def asInt(self):
+        data = [self.GPS, self.OpticalFlow, self.VisionPosition,
+        self.LandingTarget, self.LandDetector, self.PubAglAsLposDown, self.FlowGyroCompensation,
+        self.Baro]
+        data_int = map(int, data)
+        byte = "".join(map(str, data_int))
+        return int(byte[::-1], 2)
+
+    @staticmethod
+    def fromInt(value):
+        data_int = list(str(bin(value)))[2:]
+        data = list(reversed(list(map(bool, map(int, data_int)))))
+        self = LPEFusion().model_dump()
+        for param, value in zip(self.keys(), data):
+            self.update({param: value})
+        return LPEFusion().model_validate(self)
+
 
 class CopterData(BaseModel):
     type: str = Field("Info")
