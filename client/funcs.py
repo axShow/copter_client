@@ -1,7 +1,7 @@
 from modules.flight import *
 from modules import led, setup
 from modules.other import *
-from modules.setup import connect_wifi
+from modules.setup import connect_wifi, get_tune_params
 
 
 async def proccess(method: str, args: dict) -> dict:
@@ -101,23 +101,26 @@ async def proccess(method: str, args: dict) -> dict:
         # bottom_left: bool
         # start_id: int
         pass
-    if method == "reboot_fcu":
+    elif method == "reboot_fcu":
         reboot_fcu()
         return {"result": True, "details": "success"}
-    if method == "reboot_system":
+    elif method == "reboot_system":
         reboot_system()
         return {"result": True, "details": "success"}
-    if method == "restart_client":
+    elif method == "restart_client":
         restart_service()
         return {"result": True, "details": "success"}
-    if method == "restart_clover":
+    elif method == "restart_clover":
         restart_clover()
         return {"result": True, "details": "success"}
-    if method == "kill_client":
+    elif method == "kill_client":
         stop_service()
         return {"result": True, "details": "success"}
-    if method == "self_check":
+    elif method == "self_check":
         selfcheck()
         return {"result": True, "details": "success"}
+    elif method == "get_tune_params":
+        values = get_tune_params()
+        return {"result": True, "details": "success", "payload": values.model_dump()}
     else:
         return {"result": False, "details": "command not found"}

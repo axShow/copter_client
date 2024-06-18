@@ -3,7 +3,7 @@ from typing_extensions import Union
 
 from pydantic import BaseModel, Field
 
-class Coefficents(BaseModel):
+class Coefficients(BaseModel):
     MC_ROLLRATE_P: float
     MC_ROLLRATE_I: float
     MC_ROLLRATE_D: float
@@ -13,7 +13,7 @@ class Coefficents(BaseModel):
     MPC_XY_VEL_P: float
     MPC_Z_VEL_P: float
     MPC_THR_HOVER: float
-
+# print(Coefficents.model_fields.get("MC_ROLLRATE_P").annotation == int)
 class LPEFusion(BaseModel):
     GPS: bool = Field(False)
     OpticalFlow: bool = Field(False)
@@ -41,6 +41,9 @@ class LPEFusion(BaseModel):
             self.update({param: value})
         return LPEFusion().model_validate(self)
 
+class TuneParams(BaseModel):
+    lpe_fusion: LPEFusion
+    coefficients: Coefficients
 
 class CopterData(BaseModel):
     type: str = Field("Info")

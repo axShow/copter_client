@@ -13,7 +13,6 @@ import funcs
 import connector
 from copterData import CopterData, Query, Response
 from utils import send_msg, recv_msg
-
 name = socket.gethostname()
 try:
     import rospy
@@ -52,7 +51,7 @@ async def receiver():
                         result = await funcs.proccess(query.method_name, query.args)
                     except Exception as e:
                         logger.exception(e.args[0])
-                        result = {"result": False, "error": e.args[0]}
+                        result = {"result": False, "details": e.args[0]}
                     response = Response(id=query.id, result=result)
                     send_msg(connector.client, response.model_dump_json().encode("utf-16"))
                     logger.debug(f"Responsed {response}")

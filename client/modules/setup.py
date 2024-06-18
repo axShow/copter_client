@@ -5,6 +5,8 @@ from typing_extensions import Literal, Union
 
 from loguru import logger
 
+from copterData import Coefficients, LPEFusion, TuneParams
+
 try:
     import rospy
     from mavros_msgs.srv import ParamSet, ParamGet
@@ -13,7 +15,8 @@ try:
     param_set = rospy.ServiceProxy("mavros/param/set", ParamSet)
     param_get = rospy.ServiceProxy("mavros/param/get", ParamGet)
 except ImportError:
-    pass  # TODO: create faker
+    from faker import param_get, param_set
+    from faker import ParamValueFake as ParamValue
 cam_path = "/home/pi/catkin_ws/src/clover/clover/launch/main_camera.launch"
 clover_path = "/home/pi/catkin_ws/src/clover/clover/launch/clover.launch"
 aruco_path = "/home/pi/catkin_ws/src/clover/clover/launch/aruco.launch"
@@ -89,3 +92,29 @@ def run_setup(
     #     led.write(f, encoding='utf-8')
     # with open('clover/launch/main_camera.launch', 'wb') as f:
     #     main_camera.write(f, encoding='utf-8')
+def get_tune_params():
+    coefficients_params = Coefficients.model_fields
+    coefficients_values = {}
+    for param_id, field in coefficients_params.items():
+        param_type = field.annotation
+        if param_type == float:
+            value = param_get(param_id=param_id).value.float
+        else:
+            value = param_get(param_id=param_id).value.integer
+        coefficients_values.update({param_id: value})
+    lpe_int = param_get(param_id="LPE_FUSION").value.integer
+    coefficients = Coefficients.model_validate(coefficients_values)
+    lpe_fusion = LPEFusion.fromInt(lpe_int)
+    return TuneParams(lpe_fusion=lpe_fusion, coefficients=coefficients)
+
+def set_tune_params(tune_params: TuneParams):
+    coefficients = tune_params.coefficients.model_dump()
+    lpe_int = LPEFusion.asInt(tune_params.lpe_fusion)
+    for param_id, param_value in coefficients.items():
+        param_type = type(param_value)
+        new_value = ParamValue(real=param_value) if param_type == float else ParamValue(integer=param_value) 
+        param_set(param_id=param_id, value=new_value)
+    param_set(param_id='LPE_FUSION', value=ParamValue(integer=lpe_int))
+    return True
+
+
