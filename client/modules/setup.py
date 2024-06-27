@@ -97,23 +97,27 @@ def get_tune_params():
     coefficients_values = {}
     for param_id, field in coefficients_params.items():
         param_type = field.annotation
+        param = param_get(param_id=param_id)
+        if not param.success: logger.error("Can't read parameter: " + param_id)
         if param_type == float:
-            value = param_get(param_id=param_id).value.float
+            value = param.value.real
         else:
-            value = param_get(param_id=param_id).value.integer
+            value = param.value.integer
         coefficients_values.update({param_id: value})
     lpe_int = param_get(param_id="LPE_FUSION").value.integer
     coefficients = Coefficients.model_validate(coefficients_values)
     lpe_fusion = LPEFusion.fromInt(lpe_int)
     return TuneParams(lpe_fusion=lpe_fusion, coefficients=coefficients)
 
-def set_tune_params(tune_params: TuneParams):
+def set_tune_params(tune_params_dict: dict):
+    tune_params = TuneParams.model_validate(tune_params_dict)
     coefficients = tune_params.coefficients.model_dump()
     lpe_int = LPEFusion.asInt(tune_params.lpe_fusion)
     for param_id, param_value in coefficients.items():
         param_type = type(param_value)
         new_value = ParamValue(real=param_value) if param_type == float else ParamValue(integer=param_value) 
-        param_set(param_id=param_id, value=new_value)
+        set = param_set(param_id=param_id, value=new_value)
+        if not set.success: logger.error("Can't set parameter: " + param_id)
     param_set(param_id='LPE_FUSION', value=ParamValue(integer=lpe_int))
     return True
 

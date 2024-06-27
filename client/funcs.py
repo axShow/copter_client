@@ -1,8 +1,7 @@
 from modules.flight import *
 from modules import led, setup
 from modules.other import *
-from modules.setup import connect_wifi, get_tune_params
-
+from modules.setup import connect_wifi, get_tune_params, set_tune_params
 
 async def proccess(method: str, args: dict) -> dict:
     if method == "land":
@@ -122,5 +121,8 @@ async def proccess(method: str, args: dict) -> dict:
     elif method == "get_tune_params":
         values = get_tune_params()
         return {"result": True, "details": "success", "payload": values.model_dump()}
+    elif method == "set_tune_params":
+        result = set_tune_params(args)
+        return {"result": result, "details": "Unknown"}
     else:
         return {"result": False, "details": "command not found"}

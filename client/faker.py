@@ -90,9 +90,10 @@ float_type = float
 
 class ValueFake(BaseModel):
     integer: int = Field(0)
-    float: float_type = Field(0.0, alias="real")
+    real: float_type = Field(0.0)
 
 class ParamValueFake(BaseModel):
+    success: bool = Field(True)
     value: ValueFake
 
 
