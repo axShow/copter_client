@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 from signal import SIGINT, SIGTERM, signal
 
 from loguru import logger
@@ -11,7 +12,7 @@ from time import sleep
 import socket
 import funcs
 import connector
-from copterData import CopterData, Query, Response
+from copterData import CopterData, Query, Response, Receive, Heartbeat
 from utils import send_msg, recv_msg
 name = socket.gethostname()
 try:
@@ -22,10 +23,11 @@ try:
     rospy.init_node("my_node")
     get_telemetry = rospy.ServiceProxy("get_telemetry", srv.GetTelemetry)
 except ImportError:
-    name = "AXSHOW-" + str(random.randint(1111, 9999))
+    name = "copter-10"
+    # name = "AXSHOW-" + str(random.randint(1111, 9999))
     from faker import get_telemetry
 
-
+last_server_heartbeat = 0
 #
 # def file(name: str, data: str):
 #     data_bytes: bytes = data.encode("utf-16")
@@ -36,6 +38,7 @@ except ImportError:
 
 async def receiver():
     logger.info("Started messages receiver thread")
+    global last_server_heartbeat
     while True:
         # print("ssssssssssssss")
         if connector.client is not None:
@@ -44,17 +47,20 @@ async def receiver():
                 if response is not None:
                     # print(f'Received: "{response.decode("utf-16")}"')
                     act = response.decode("utf-16")
-                    if act == "ok": continue
                     logger.info(f"Received {act}")
-                    query = Query.model_validate_json(act)
-                    try:
-                        result = await funcs.proccess(query.method_name, query.args)
-                    except Exception as e:
-                        logger.exception(e.args[0])
-                        result = {"result": False, "details": e.args[0]}
-                    response = Response(id=query.id, result=result)
-                    send_msg(connector.client, response.model_dump_json().encode("utf-16"))
-                    logger.debug(f"Responsed {response}")
+                    type = Receive.model_validate_json(act).type
+                    if type == "Query":
+                        query = Query.model_validate_json(act)
+                        try:
+                            result = await funcs.proccess(query.method_name, query.args)
+                        except Exception as e:
+                            logger.exception(e.args[0])
+                            result = {"result": False, "details": e.args[0]}
+                        response = Response(id=query.id, result=result)
+                        send_msg(connector.client, response.model_dump_json().encode("utf-16"))
+                        logger.debug(f"Responsed {response}")
+                    elif type == "Heartbeat":
+                        last_server_heartbeat = Heartbeat.model_validate_json(act).timestamp
             except KeyboardInterrupt:
                 # print("ssshutdownsd")
                 break
@@ -81,6 +87,7 @@ async def sender():
                 message = data.model_dump_json()
                 send_msg(connector.client, message.encode("utf-16"))
                 logger.debug(f"Sended {message}")
+                send_msg(connector.client, Heartbeat(timestamp=time.time_ns() // 1000000).model_dump_json().encode("utf-16"))
 
             except KeyboardInterrupt:
                 logger.info("Shutting down")
@@ -141,3 +148,4 @@ finally:
 # t2.start()
 
 # __TAURI_INVOKE__("send_action", {addrName: "ADX", query: {id: 12345, method_name: "land", args: {}}})
+

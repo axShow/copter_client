@@ -44,6 +44,12 @@ class LPEFusion(BaseModel):
 class TuneParams(BaseModel):
     lpe_fusion: LPEFusion
     coefficients: Coefficients
+class Heartbeat(BaseModel):
+    type: str = Field("Heartbeat")
+    timestamp: int = Field()
+
+class Receive(BaseModel):
+    type: str = Field()
 
 class CopterData(BaseModel):
     type: str = Field("Info")
@@ -54,6 +60,7 @@ class CopterData(BaseModel):
 
 
 class Query(BaseModel):
+    type: str = Field("Query")
     id: int
     method_name: str
     args: dict
