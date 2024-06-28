@@ -35,12 +35,11 @@ last_server_heartbeat = 0
 #     with open(name, "wb") as file:
 #         file.write(data_bytes)
 
-
+running_tasks = []
 async def receiver():
     logger.info("Started messages receiver thread")
     global last_server_heartbeat
     while True:
-        # print("ssssssssssssss")
         if connector.client is not None:
             try:
                 response = recv_msg(connector.client)
@@ -51,14 +50,19 @@ async def receiver():
                     type = Receive.model_validate_json(act).type
                     if type == "Query":
                         query = Query.model_validate_json(act)
-                        try:
-                            result = await funcs.proccess(query.method_name, query.args)
-                        except Exception as e:
-                            logger.exception(e.args[0])
-                            result = {"result": False, "details": e.args[0]}
-                        response = Response(id=query.id, result=result)
-                        send_msg(connector.client, response.model_dump_json().encode("utf-16"))
-                        logger.debug(f"Responsed {response}")
+                        async def process_in_another_thread():
+                            try:
+                                result = await funcs.execute_method(query.method_name, query.args)
+                            except Exception as e:
+                                logger.exception(e.args[0])
+                                result = {"result": False, "details": e.args[0]}
+                            response = Response(id=query.id, result=result)
+                            send_msg(connector.client, response.model_dump_json().encode("utf-16"))
+                            logger.debug(f"Responsed {response}")
+                            running_tasks.remove(threading.currentThread())
+                        new_task = threading.Thread(target=asyncio.run, args=(process_in_another_thread(),))
+                        new_task.start()
+                        running_tasks.append(new_task)
                     elif type == "Heartbeat":
                         last_server_heartbeat = Heartbeat.model_validate_json(act).timestamp
             except KeyboardInterrupt:

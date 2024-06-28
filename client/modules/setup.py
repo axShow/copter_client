@@ -9,6 +9,8 @@ from copterData import Coefficients, LPEFusion, TuneParams
 
 try:
     import rospy
+    import dynamic_reconfigure.client
+    map_client = dynamic_reconfigure.client.Client('aruco_map')
     from mavros_msgs.srv import ParamSet, ParamGet
     from mavros_msgs.msg import ParamValue
 
@@ -60,7 +62,7 @@ def run_setup(
         if atr.get("name") == "aruco_vpe":
             atr.update({"default": str(enable_aruco).lower()})
         if (atr.get("name") == "map") and (item.tag == "arg"):
-            atr.update({"default": "show_map.txt"})
+            atr.update({"default": "axshow_map.txt"})
 
     for item in main_camera.getroot().iter():
         if item.tag != "arg":
@@ -122,3 +124,35 @@ def set_tune_params(tune_params_dict: dict):
     return True
 
 
+def generate_aruco_map(length: float = 0.3,
+                 first: int = 0,
+                 markers_x: int = 2,
+                 markers_y: int = 2,
+                 dist_x: int = 1,
+                 dist_y: int = 1,
+                 bottom_left: bool = False):
+    # generating
+    output = open("~/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt", 'w+')
+    max_y = (markers_y - 1) * dist_y
+    output.write('# id\tlength\tx\ty\tz\trot_z\trot_y\trot_x\n')
+    for y in range(markers_y):
+        for x in range(markers_x):
+            pos_x = x * dist_x
+            pos_y = y * dist_y
+            if not bottom_left:
+                pos_y = max_y - pos_y
+            output.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(first, length, pos_x, pos_y, 0, 0, 0, 0))
+            first += 1
+
+    # applying in runtime
+    map_client.update_configuration({'map': '/home/pi/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt'})
+
+    # write changes in config files
+    aruco = ET.parse(aruco_path)
+    for item in aruco.getroot().iter():
+        if (atr.get("name") == "map") and (item.tag == "arg"):
+            if item.tag != "arg":
+                continue
+            atr = item.attrib
+            atr.update({"default": "axshow_map.txt"})
+    aruco.write(aruco_path, short_empty_elements=False)
