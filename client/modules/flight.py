@@ -62,7 +62,7 @@ Z_DESCEND = 0.5
 TAKEOFF_HEIGHT = 1.0
 FRAME_ID = "map"
 INTERRUPTER = threading.Event()
-FLIP_MIN_Z = 1.0
+FLIP_MIN_Z = 0.5
 
 checklist = []
 get_telemetry_lock = threading.Lock()
@@ -488,7 +488,7 @@ async def flip(
         set_rates(thrust=1)  # bump up
         await asyncio.sleep(0.2)
 
-        set_rates(roll_rate=30, thrust=0.2)  # maximum roll rate
+        set_rates(roll_rate=50, thrust=0.2)  # maximum roll rate
         timed = 0
         while True:
             telem = get_telemetry_locked()

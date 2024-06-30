@@ -178,8 +178,8 @@ async def set_arming(args: dict):
 
 @command(alias="flip")
 async def flip_wrapper(args: dict):
-    arming_wrapper(**args)
-    return {"result": True, "details": "Unknown"}
+    res, details = await flip(**args)
+    return {"result": res, "details": details}
 
 
 @command(alias="calibrate_gyro")
@@ -208,6 +208,7 @@ async def connect_wifi_wrapper(args: dict):
 @command()
 async def generate_map(args: dict):
     generate_aruco_map(**args)
+    return {"result": True, "details": "success"}
 
 
 @command(alias="reboot_fcu")
@@ -260,8 +261,7 @@ async def set_tune_params_wrapper(args: dict):
 
 @command()
 async def default(args: dict):
-    result = set_tune_params(args)
-    return {"result": result, "details": "Unknown"}
+    return {"result": False, "details": "Unknown command"}
 
 
 async def execute_method(method: str, args: dict) -> dict:

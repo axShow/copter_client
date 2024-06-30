@@ -7,22 +7,28 @@ from loguru import logger
 
 from copterData import Coefficients, LPEFusion, TuneParams
 
+cam_path = "/home/pi/catkin_ws/src/clover/clover/launch/main_camera.launch"
+clover_path = "/home/pi/catkin_ws/src/clover/clover/launch/clover.launch"
+aruco_path = "/home/pi/catkin_ws/src/clover/clover/launch/aruco.launch"
+led_path = "/home/pi/catkin_ws/src/clover/clover/launch/led.launch"
+
 try:
     import rospy
     import dynamic_reconfigure.client
-    map_client = dynamic_reconfigure.client.Client('aruco_map')
     from mavros_msgs.srv import ParamSet, ParamGet
     from mavros_msgs.msg import ParamValue
-
+    
+    is_simulation = rospy.get_param('/use_sim_time', False)
+    if is_simulation:
+        aruco_path = aruco_path.replace("pi", "clover")
+        clover_path = clover_path.replace("pi", "clover")
+        led_path = led_path.replace("pi", "clover")
+        cam_path = cam_path.replace("pi", "clover")
     param_set = rospy.ServiceProxy("mavros/param/set", ParamSet)
     param_get = rospy.ServiceProxy("mavros/param/get", ParamGet)
 except ImportError:
     from faker import param_get, param_set
     from faker import ParamValueFake as ParamValue
-cam_path = "/home/pi/catkin_ws/src/clover/clover/launch/main_camera.launch"
-clover_path = "/home/pi/catkin_ws/src/clover/clover/launch/clover.launch"
-aruco_path = "/home/pi/catkin_ws/src/clover/clover/launch/aruco.launch"
-led_path = "/home/pi/catkin_ws/src/clover/clover/launch/led.launch"
 
 
 def connect_wifi(ssid: str, password: str, hostname: Union[str, None]):
@@ -132,7 +138,17 @@ def generate_aruco_map(length: float = 0.3,
                  dist_y: int = 1,
                  bottom_left: bool = False):
     # generating
-    output = open("~/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt", 'w+')
+    dynamic = False
+    try:
+        map_client = dynamic_reconfigure.client.Client('aruco_map', 5)
+        dynamic = True
+        paths = map_client.get_configuration().get("map", '/home/pi/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt').split("/")
+    except rospy.exceptions.ROSException:
+        paths = '/home/pi/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt'.split("/")
+    if is_simulation:
+        paths[paths.index("pi")] = "clover"
+    directory = "/".join(paths[0:len(paths)-1])
+    output = open(directory + "/axshow_map.txt", 'w+')
     max_y = (markers_y - 1) * dist_y
     output.write('# id\tlength\tx\ty\tz\trot_z\trot_y\trot_x\n')
     for y in range(markers_y):
@@ -145,14 +161,13 @@ def generate_aruco_map(length: float = 0.3,
             first += 1
 
     # applying in runtime
-    map_client.update_configuration({'map': '/home/pi/catkin_ws/src/clover/aruco_pose/map/axshow_map.txt'})
-
+    if dynamic: map_client.update_configuration({'map': directory + '/axshow_map.txt'})
     # write changes in config files
     aruco = ET.parse(aruco_path)
     for item in aruco.getroot().iter():
+        if item.tag != "arg":
+            continue
+        atr = item.attrib
         if (atr.get("name") == "map") and (item.tag == "arg"):
-            if item.tag != "arg":
-                continue
-            atr = item.attrib
             atr.update({"default": "axshow_map.txt"})
     aruco.write(aruco_path, short_empty_elements=False)

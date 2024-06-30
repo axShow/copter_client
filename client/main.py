@@ -28,6 +28,7 @@ except ImportError:
     from faker import get_telemetry
 
 last_server_heartbeat = 0
+heartbeat_timeout = 10000
 #
 # def file(name: str, data: str):
 #     data_bytes: bytes = data.encode("utf-16")
@@ -38,7 +39,6 @@ last_server_heartbeat = 0
 running_tasks = []
 async def receiver():
     logger.info("Started messages receiver thread")
-    global last_server_heartbeat
     while True:
         if connector.client is not None:
             try:
@@ -64,6 +64,7 @@ async def receiver():
                         new_task.start()
                         running_tasks.append(new_task)
                     elif type == "Heartbeat":
+                        global last_server_heartbeat
                         last_server_heartbeat = Heartbeat.model_validate_json(act).timestamp
             except KeyboardInterrupt:
                 # print("ssshutdownsd")
@@ -80,7 +81,15 @@ async def receiver():
 async def sender():
     while True:
         # print(socket)
+        global last_server_heartbeat
         if connector.client is not None:
+            if time.time_ns() // 1000000 - last_server_heartbeat > heartbeat_timeout and last_server_heartbeat != 0:
+                try:
+                    connector.client.close() 
+                finally:
+                    connector.client = None
+                    last_server_heartbeat = 0
+                continue
             try:
                 telem = get_telemetry()
                 data = CopterData(
@@ -92,7 +101,8 @@ async def sender():
                 send_msg(connector.client, message.encode("utf-16"))
                 logger.debug(f"Sended {message}")
                 send_msg(connector.client, Heartbeat(timestamp=time.time_ns() // 1000000).model_dump_json().encode("utf-16"))
-
+                
+                
             except KeyboardInterrupt:
                 logger.info("Shutting down")
                 break
@@ -100,8 +110,9 @@ async def sender():
                 connector.client = None
                 logger.warning("Disconnected...")
                 # connector.restart()
-            except OSError:
-                logger.warning("Disconnected...")
+            except OSError as e:
+                print(e.with_traceback())
+                logger.warning("Disconnected (force)...")
                 pass
             except Exception as e:
                 logger.exception(e.args)
