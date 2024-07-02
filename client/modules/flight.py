@@ -9,11 +9,11 @@ from loguru import logger
 from typing_extensions import Tuple
 
 try:
-    import rospy
-    from clover import srv
-    from mavros_msgs.srv import SetMode
-    from mavros_msgs.srv import CommandBool
-    from std_srvs.srv import Trigger
+    import rospy # type: ignore
+    from clover import srv # type: ignore
+    from mavros_msgs.srv import SetMode # type: ignore
+    from mavros_msgs.srv import CommandBool # type: ignore
+    from std_srvs.srv import Trigger # type: ignore
 
     # create proxy service
     navigate = rospy.ServiceProxy("/navigate", srv.Navigate)
@@ -83,126 +83,8 @@ def interrupt():
     INTERRUPTER.set()
 
 
-def init(node_name="CleverSwarmFlight", anon=True, no_signals=True):
-    logger.info("Initing ROS node")
-    rospy.init_node(node_name, anonymous=anon, disable_signals=no_signals)
-    logger.info("Ros node inited")
-
-
 def get_distance3d(x1, y1, z1, x2, y2, z2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
-
-
-def check(check_name):
-    def inner(f):
-        def wrapper(*args, **kwargs):
-            failures = f(*args, **kwargs)
-            msgs = []
-            for failure in failures:
-                msg = "[{}]: Err: {}".format(check_name, failure)
-                msgs.append(msg)
-                logger.warning(msg)
-
-            if msgs:
-                return msgs
-            else:
-                logger.debug("[{}]: OK".format(check_name))
-                return None
-
-        checklist.append(wrapper)
-        return wrapper
-
-    return inner
-
-
-def _check_nans(*values):
-    return any(math.isnan(x) for x in values)
-
-
-def check_ros_services_unavailable():
-    unavailable_services = []
-    for service in services_list:
-        try:
-            rospy.wait_for_service(service, timeout=0.1)
-        except (rospy.ServiceException, rospy.ROSException):
-            unavailable_services.append(service)
-    return unavailable_services
-
-
-@check("Ros services")
-def check_ros_services():
-    for service in services_list:
-        try:
-            rospy.wait_for_service(service, timeout=0.1)
-        except (rospy.ServiceException, rospy.ROSException):
-            yield ("ROS service {} is not available!".format(service))
-
-
-@check("FCU connection")
-def check_connection():
-    telemetry = get_telemetry_locked()
-    if not telemetry.connected:
-        yield ("Flight controller is not connected!")
-
-
-@check("Linear velocity estimation")
-def check_linear_speeds(speed_limit=0.15):
-    telemetry = get_telemetry_locked(frame_id="body")
-
-    if _check_nans(telemetry.vx, telemetry.vy, telemetry.vz):
-        yield ("Velocity estimation is not available")
-
-    if telemetry.vx >= speed_limit:
-        yield ("X velocity estimation: {:.3f} m/s".format(telemetry.vx))
-    if telemetry.vy >= speed_limit:
-        yield ("Y velocity estimation: {:.3f} m/s".format(telemetry.vy))
-    if telemetry.vz >= speed_limit:
-        yield ("Z velocity estimation: {:.3f} m/s".format(telemetry.vz))
-
-
-@check("Angular velocity estimation")
-def check_angular_speeds(rate_limit=0.05):
-    telemetry = get_telemetry_locked(frame_id="body")
-
-    if _check_nans(telemetry.pitch_rate, telemetry.roll_rate, telemetry.yaw_rate):
-        yield ("Angular velocities estimation is not available")
-
-    if telemetry.pitch_rate >= rate_limit:
-        yield ("Pitch rate estimation: {:.3f} rad/s".format(telemetry.pitch_rate))
-    if telemetry.roll_rate >= rate_limit:
-        yield ("Roll rate estimation: {:.3f} rad/s".format(telemetry.roll_rate))
-    if telemetry.yaw_rate >= rate_limit:
-        yield ("Yaw rate estimation: {:.3f} rad/s".format(telemetry.yaw_rate))
-
-
-@check("Angles estimation")
-def check_angles(angle_limit=math.radians(5)):
-    telemetry = get_telemetry_locked(frame_id="body")
-
-    if _check_nans(telemetry.pitch, telemetry.roll, telemetry.yaw):
-        yield ("Angular velocities estimation is not available")
-
-    if abs(telemetry.pitch) >= angle_limit:
-        yield (
-            "Pitch estimation: {:.3f} rad;{:.3f} degrees".format(
-                telemetry.pitch, math.degrees(telemetry.pitch)
-            )
-        )
-    if abs(telemetry.roll) >= angle_limit:
-        yield (
-            "Roll estimation: {:.3f} rad;{:.3f} degrees".format(
-                telemetry.roll, math.degrees(telemetry.roll)
-            )
-        )
-
-
-def selfcheck():
-    checks = []
-    for check_f in checklist:
-        msg = check_f()
-        checks += msg if msg else []
-
-    return checks
 
 
 def get_delta():
@@ -302,7 +184,7 @@ def reach_point(
     return True
 
 
-def reach_altitude(
+async def reach_altitude(
     z=0.0,
     yaw=float("nan"),
     speed=SPEED,
@@ -355,7 +237,7 @@ def reach_altitude(
                 )
                 # print('Reaching attitude timed out! | time: {:3f} seconds'.format(time_passed))
                 return wait
-        time.sleep(1 / FREQUENCY)
+        await asyncio.sleep(1 / freq)
 
     logger.info("Altitude reached!")
     # print("Altitude reached!")
@@ -416,7 +298,7 @@ async def land(
                 # print("Landing timed out, disarming!!!")
                 arming(False)
                 return False, "timeout"
-        await asyncio.sleep(1 / FREQUENCY)
+        await asyncio.sleep(1 / freq)
 
     logger.info("Landing succeeded!")
     # print("Landing succeeded!")

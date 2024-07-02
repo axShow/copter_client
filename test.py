@@ -1,22 +1,10 @@
-import socket
-from time import sleep
+from client.modules.animation_parser import Animation
+import rospy
+from clover import srv
 
-def main():
-    interfaces = socket.getaddrinfo(host=socket.gethostname(), port=None, family=socket.AF_INET)
-    allips = [ip[-1][0] for ip in interfaces]
+anim = Animation("animation.axsanim.yaml")
+anim.load()
 
-    msg = b'hello world'
-    while True:
-
-        for ip in allips:
-            print(f'sending on {ip}')
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.bind((ip,0))
-            sock.sendto(msg, ("255.255.255.255", 31255))
-            sock.close()
-
-        sleep(2)
-
-
-main()
+navigate = rospy.ServiceProxy('navigate', srv.Navigate)
+for frame in anim.frames:
+    navigate(x=frame.x, y=frame.y, z=frame.z, frame=frame.nav_frame)

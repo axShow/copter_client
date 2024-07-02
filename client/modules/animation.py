@@ -167,7 +167,7 @@ class Animation(object):
             self.set_state("Bad animation delay from config 'ANIMATION' section", log_error=True)
             return
         try:
-            animation_file = open(self.filepath, 'rU')
+            animation_file = open(self.filepath, 'r')
         except IOError:
             self.set_state("File {} can't be opened".format(self.filepath), log_error=True)
         else:
@@ -177,7 +177,7 @@ class Animation(object):
                     animation_file, delimiter=',', quotechar='|'
                 )
                 try:
-                    row_0 = csv_reader.next()
+                    row_0 = next(csv_reader)
                 except StopIteration:
                     self.set_state("Animation file is empty", log_error=True)
                     return

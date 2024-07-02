@@ -2,14 +2,15 @@ from loguru import logger
 from typing_extensions import Tuple
 
 try:
-    import rospy
-    from clover.srv import SetLEDEffect
+    import rospy # type: ignore
+    from clover.srv import SetLEDEffect # type: ignore
 
     set_effect_service = rospy.ServiceProxy('led/set_effect', SetLEDEffect)
 except ImportError:
     import faker
 
     set_effect_service = faker.set_effect_service
+
 
 def set_effect(*args, **kwargs) -> Tuple[bool, str]:
     try:
