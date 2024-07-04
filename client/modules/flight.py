@@ -14,6 +14,9 @@ try:
     from mavros_msgs.srv import SetMode # type: ignore
     from mavros_msgs.srv import CommandBool # type: ignore
     from std_srvs.srv import Trigger # type: ignore
+    from pymavlink import mavutil # type: ignore
+    from mavros_msgs.srv import CommandLong # type: ignore
+    from sensor_msgs.msg import Range # type: ignore
 
     # create proxy service
     navigate = rospy.ServiceProxy("/navigate", srv.Navigate)
@@ -24,6 +27,7 @@ try:
     arming = rospy.ServiceProxy("/mavros/cmd/arming", CommandBool)
     landing = rospy.ServiceProxy("/land", Trigger)
     emergency_land = rospy.ServiceProxy("/emergency_land", Trigger)
+    send_command = rospy.ServiceProxy('/mavros/cmd/command', CommandLong)
 except ImportError:
     import faker
 
@@ -63,6 +67,7 @@ TAKEOFF_HEIGHT = 1.0
 FRAME_ID = "map"
 INTERRUPTER = threading.Event()
 FLIP_MIN_Z = 0.5
+KILL_Z = 0.15
 
 checklist = []
 get_telemetry_lock = threading.Lock()
@@ -77,6 +82,41 @@ def get_telemetry_locked(*args, **kwargs):
 def arming_wrapper(state=False, *args, **kwargs):
     arming(state)
 
+
+def kill_switch():
+    send_command(command=400, param2=21196) #force disarm
+
+async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=False, timeout_descend=TIMEOUT_DESCEND):
+    time_start = time.time()
+    while True:
+        if descend:
+            logger.info("Descending to: | z: {:.3f}".format(0))
+            # print("Descending to: | z: {:.3f}".format(z))
+            await reach_altitude(
+                z=0,
+                timeout=timeout_descend,
+                freq=freq,
+                yaw=float("nan"),  # TODO yaw
+            )
+        dist = rospy.wait_for_message('rangefinder/range', Range).range
+        if dist <= kill_z:
+            logger.warning(f"Force disarming! | z: {dist:.3f}")
+            kill_switch()
+            return True, "success"
+
+        time_passed = time.time() - time_start
+
+        if timeout is not None:
+            if time_passed >= timeout:
+                logger.warning(
+                    "Force landing timed out! | time: {:3f} seconds".format(
+                        time_passed
+                    )
+                )
+                return False, "Force land timeout"
+
+        await asyncio.sleep(1/freq)
+    
 
 def interrupt():
     logger.info("Performing function interrupt")

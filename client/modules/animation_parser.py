@@ -5,8 +5,8 @@ import yaml
 NavFrame = Literal["body", "aruco_map", "map", "gps"]
 MoveType = Literal["relative", "absolute"]
 StartAction = Literal["takeoff", "fly"]
-EndAction = Literal["stay", "land"]
-FrameAction = Literal["arm", "route", "land"]
+EndAction = Literal["stay", "land", "disarm"]
+FrameAction = Literal["arm", "route", "land", "disarm"]
 CordsSystem = Literal["global", "local"]
 
 
@@ -62,7 +62,10 @@ class Animation(object):
             for rframe in raw_frames[1:]:
                 self.frames.append(Frame(rframe, nav_frame, self.config.frame_delay))
             if (self.config.end_action == "land"):
-                self.frames.append(Frame(f"-1,0,0,0,nan,0,0,0", action="land", delay=5))
+                self.frames.append(Frame(f"999,0,0,0,nan,0,0,0", action="land", delay=5))
+                self.frames.append(Frame(rframe, nav_frame, self.config.frame_delay))
+            if (self.config.end_action == "disarm"):
+                self.frames.append(Frame(f"999,0,0,0,nan,0,0,0", action="disarm", delay=5))
             self.frames[0].action = "arm"
 
 
