@@ -69,7 +69,7 @@ TAKEOFF_HEIGHT = 1.0
 FRAME_ID = "map"
 INTERRUPTER = threading.Event()
 FLIP_MIN_Z = 0.5
-KILL_Z = 0.2
+KILL_Z = 0.15
 
 checklist = []
 get_telemetry_lock = threading.Lock()
@@ -101,7 +101,7 @@ async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=Fal
                 yaw=float("nan"),  # TODO yaw
             )
         try:
-            dist = rospy.wait_for_message('rangefinder/range', Range, 5).range
+            dist = rospy.wait_for_message('rangefinder/range', Range, 30).range
         except ROSException: 
             logger.warning(
                     "Waiting rangefinder timed out! | time: 5 seconds"
