@@ -8,6 +8,8 @@ import threading
 from loguru import logger
 from typing_extensions import Tuple
 
+from rospy import ROSException
+
 try:
     import rospy # type: ignore
     from clover import srv # type: ignore
@@ -67,7 +69,7 @@ TAKEOFF_HEIGHT = 1.0
 FRAME_ID = "map"
 INTERRUPTER = threading.Event()
 FLIP_MIN_Z = 0.5
-KILL_Z = 0.15
+KILL_Z = 0.2
 
 checklist = []
 get_telemetry_lock = threading.Lock()
@@ -98,14 +100,19 @@ async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=Fal
                 freq=freq,
                 yaw=float("nan"),  # TODO yaw
             )
-        dist = rospy.wait_for_message('rangefinder/range', Range).range
+        try:
+            dist = rospy.wait_for_message('rangefinder/range', Range, 5).range
+        except ROSException: 
+            logger.warning(
+                    "Waiting rangefinder timed out! | time: 5 seconds"
+                )
+            return False, "Rangefinder timeout"
         if dist <= kill_z:
             logger.warning(f"Force disarming! | z: {dist:.3f}")
             kill_switch()
             return True, "success"
 
         time_passed = time.time() - time_start
-
         if timeout is not None:
             if time_passed >= timeout:
                 logger.warning(
