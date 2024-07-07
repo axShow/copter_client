@@ -2,7 +2,7 @@ from typing_extensions import Literal, List
 from pydantic import BaseModel, Field
 import yaml
 
-NavFrame = Literal["body", "aruco_map", "map", "gps"]
+NavFrame = Literal["body", "aruco_map", "map", "gps", "navigate_target"]
 MoveType = Literal["relative", "absolute"]
 StartAction = Literal["takeoff", "fly"]
 EndAction = Literal["stay", "land", "disarm"]
@@ -60,10 +60,12 @@ class Animation(object):
             if (self.config.start_action == "takeoff"):
                 self.frames.append(Frame(f"-1,0,0,{self.config.takeoff_height},nan,0,0,0", "body", 5, "arm"))
             for rframe in raw_frames[1:]:
+                if len(rframe.split(",")) != 8: continue
+                print(rframe)
                 self.frames.append(Frame(rframe, nav_frame, self.config.frame_delay))
             if (self.config.end_action == "land"):
                 self.frames.append(Frame(f"999,0,0,0,nan,0,0,0", action="land", delay=5))
-                self.frames.append(Frame(rframe, nav_frame, self.config.frame_delay))
+                # self.frames.append(Frame(rframe, nav_frame, self.config.frame_delay))
             if (self.config.end_action == "disarm"):
                 self.frames.append(Frame(f"999,0,0,0,nan,0,0,0", action="disarm", delay=5))
             self.frames[0].action = "arm"

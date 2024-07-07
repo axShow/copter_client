@@ -7,7 +7,7 @@ from std_srvs.srv import Trigger
 from mavros_msgs.srv import CommandBool
 from pymavlink import mavutil
 from mavros_msgs.srv import CommandLong
-anim = Animation("circle.axsanim")
+anim = Animation("spiral1.axsanim")
 anim.load()
 rospy.init_node("flight")
 navigate = rospy.ServiceProxy('navigate', srv.Navigate)
@@ -25,7 +25,7 @@ async def test():
             print("disarming")
             continue
         else: 
-            navigate(x=frame.x, y=frame.y, z=frame.z, 
+            navto(x=frame.x, y=frame.y, z=frame.z, 
                 yaw=frame.yaw,
                 frame_id=frame.nav_frame, 
                 auto_arm=frame.action == "arm", 
