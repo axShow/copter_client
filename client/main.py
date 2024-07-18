@@ -5,6 +5,8 @@ from signal import SIGINT, SIGTERM, signal
 
 from loguru import logger
 
+from modules.mavros_wrapper import get_sys_status
+
 logger.add('copterClient.log', level='INFO')
 logger.info("Starting client up...")
 import threading
@@ -23,11 +25,12 @@ try:
     rospy.init_node("my_node")
     get_telemetry = rospy.ServiceProxy("get_telemetry", srv.GetTelemetry)
 except ImportError:
-    name = "copter-10"
-    # name = "AXSHOW-" + str(random.randint(1111, 9999))
+    # name = "copter-10"
+    name = "AXSHOW-" + str(random.randint(1111, 9999))
     from faker import get_telemetry
 
 last_server_heartbeat = 0
+last_client_heartbeat = 0
 heartbeat_timeout = 10000
 #
 # def file(name: str, data: str):
@@ -65,6 +68,7 @@ async def receiver():
                         running_tasks.append(new_task)
                     elif type == "Heartbeat":
                         global last_server_heartbeat
+                        connector.time_offset = last_server_heartbeat - last_client_heartbeat
                         last_server_heartbeat = Heartbeat.model_validate_json(act).timestamp
             except KeyboardInterrupt:
                 # print("ssshutdownsd")
@@ -81,7 +85,7 @@ async def receiver():
 async def sender():
     while True:
         # print(socket)
-        global last_server_heartbeat
+        global last_server_heartbeat, last_client_heartbeat
         if connector.client is not None:
             if time.time_ns() // 1000000 - last_server_heartbeat > heartbeat_timeout and last_server_heartbeat != 0:
                 try:
@@ -95,12 +99,16 @@ async def sender():
                 data = CopterData(
                     name=name,
                     battery=telem.voltage,
-                    controller_state=str(telem.connected),
+                    x=telem.x,
+                    y=telem.y,
+                    z=telem.z,
+                    controller_state=get_sys_status(),
                     flight_mode=telem.mode)
                 message = data.model_dump_json()
                 send_msg(connector.client, message.encode("utf-16"))
                 logger.debug(f"Sended {message}")
                 send_msg(connector.client, Heartbeat(timestamp=time.time_ns() // 1000000).model_dump_json().encode("utf-16"))
+                last_client_heartbeat = time.time_ns() // 1000000
                 
                 
             except KeyboardInterrupt:
@@ -108,11 +116,11 @@ async def sender():
                 break
             except ConnectionResetError:
                 connector.client = None
-                logger.warning("Disconnected...")
+                # logger.warning("Disconnected...")
                 # connector.restart()
             except OSError as e:
                 print(e.with_traceback())
-                logger.warning("Disconnected (force)...")
+                # logger.warning("Disconnected (force)...")
                 pass
             except Exception as e:
                 logger.exception(e.args)

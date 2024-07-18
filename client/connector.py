@@ -7,7 +7,7 @@ from loguru import logger
 from broadcast_receiver import broadcast
 
 client: typing_extensions.Union[socket.socket, None] = None
-
+time_offset = 0
 try:
     # import dont_use_zeroconf
     # if you want to use mdns as main method for finding server, remove the previous line
@@ -65,7 +65,9 @@ except ImportError:
 #     zeroconf.remove_service_listener(listener)
 #     browser = ServiceBrowser(zeroconf, "_cshow._tcp.local.", listener)
 #
-
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(("192.168.226.1", 6900))
+            
 
 # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #

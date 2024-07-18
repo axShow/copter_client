@@ -1,14 +1,16 @@
 config:
   animation_name: spiral1
+  object_name: copter-1
   move_type: relative
   nav_frame: navigate_target
   frame_delay: 0.1
   start_action: takeoff
   end_action: land
   takeoff_height: 0.7
+  reboot_fcu: False
   coords_system: local
+  start_position: 1, 2
 ==================================
-31,0.0,0.0,0.5127105712890625,nan,0,0,0
 32,0.0,0.0,0.02539205551147461,nan,0,0,0
 33,0.0,0.0,0.025304436683654785,nan,0,0,0
 34,0.0,0.0,0.025158405303955078,nan,0,0,0

@@ -1,10 +1,11 @@
+from modules.animation_processor import run_animation
+from modules.animation_processor import INTERRUPTER as show_interrupter
 from modules.flight import *
 from modules import led, setup
 from modules.other import *
 from modules.setup import connect_wifi, get_tune_params, set_tune_params, generate_aruco_map
 from functools import wraps
-
-
+import connector
 # async def proccess(method: str, args: dict) -> dict:
 #     if method == "land":
 #         # ARGS:
@@ -199,6 +200,12 @@ async def file_transfer_wrapper(args: dict):
     file_trans(**args)
 
 
+@command(alias="upload_animation")
+async def upload_animation_wrapper(args: dict):
+    result = upload_animation(**args)
+    return {"result": result[0], "details": result[1]}
+
+
 @command(alias="connect_wifi")
 async def connect_wifi_wrapper(args: dict):
     connect_wifi(**args)
@@ -247,6 +254,12 @@ async def self_check(args: dict):
     return {"result": True, "details": "success"}
 
 
+@command()
+async def run_show(args: dict):
+    await run_animation(**args, offset=connector.time_offset)
+    return {"result": True, "details": "success"}
+
+
 @command(alias="get_tune_params")
 async def get_tune_params_wrapper(args: dict):
     values = get_tune_params()
@@ -258,6 +271,11 @@ async def set_tune_params_wrapper(args: dict):
     result = set_tune_params(args)
     return {"result": result, "details": "Unknown"}
 
+
+@command()
+async def interrupt_show(args: dict):
+    show_interrupter.set()
+    return {"result": True, "details": "Unknown command"}
 
 @command()
 async def default(args: dict):

@@ -57,6 +57,9 @@ class CopterData(BaseModel):
     battery: float
     flight_mode: str
     controller_state: str
+    x: float
+    y: float
+    z: float
 
 
 class Query(BaseModel):
