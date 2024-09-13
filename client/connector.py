@@ -9,7 +9,7 @@ from broadcast_receiver import broadcast
 client: typing_extensions.Union[socket.socket, None] = None
 time_offset = 0
 try:
-    # import dont_use_zeroconf
+    import dont_use_zeroconf
     # if you want to use mdns as main method for finding server, remove the previous line
 
     from zeroconf import ServiceBrowser, ServiceListener, Zeroconf, ZeroconfServiceTypes, DNSCache

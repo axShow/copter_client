@@ -1,5 +1,5 @@
 from enum import Enum
-from typing_extensions import Union
+from typing_extensions import Union, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -60,6 +60,7 @@ class CopterData(BaseModel):
     x: float
     y: float
     z: float
+    color: Tuple[int, int, int]
 
 
 class Query(BaseModel):

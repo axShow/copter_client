@@ -2,7 +2,7 @@ import asyncio
 import random
 import time
 from signal import SIGINT, SIGTERM, signal
-
+from modules.led import get_color
 from loguru import logger
 
 from modules.mavros_wrapper import get_sys_status
@@ -103,7 +103,8 @@ async def sender():
                     y=telem.y,
                     z=telem.z,
                     controller_state=get_sys_status(),
-                    flight_mode=telem.mode)
+                    flight_mode=telem.mode,
+                    color=get_color())
                 message = data.model_dump_json()
                 send_msg(connector.client, message.encode("utf-16"))
                 logger.debug(f"Sended {message}")
@@ -116,12 +117,11 @@ async def sender():
                 break
             except ConnectionResetError:
                 connector.client = None
-                # logger.warning("Disconnected...")
-                # connector.restart()
+            except BrokenPipeError:
+                connector.client = None
             except OSError as e:
-                print(e.with_traceback())
+                logger.exception(e)
                 # logger.warning("Disconnected (force)...")
-                pass
             except Exception as e:
                 logger.exception(e.args)
 
