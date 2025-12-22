@@ -24,14 +24,12 @@ try:
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client.connect((info.parsed_addresses()[0], info.port))
             logger.info(f"Service {name} updated")
-            # print(f"Service {name} updated")
 
         def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             global client
             if client is not None: client.close()
             client = None
             logger.warning("Disconnected...")
-            # print(f"Service {name} removed")
 
         def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             global client
@@ -44,13 +42,12 @@ try:
                 if len(info.parsed_addresses()) > 0:
                     client.connect((info.parsed_addresses()[0], info.port))
             logger.info(f"Service {name} added")
-            # print(f"Service {name} added, service info: {info}")
 
 
     zeroconf = Zeroconf()
     listener = MyListener()
     browser = ServiceBrowser(zeroconf, "_cshow._tcp.local.", listener)
-    # logger.info("Started zeroconf listener")
+    
 except ImportError:
     logger.warning("Can't use zeroconf, using broadcast receiver")
     t2: threading.Thread = threading.Thread(target=broadcast, daemon=True)
