@@ -88,9 +88,12 @@ def arming_wrapper(state=False, *args, **kwargs):
 def kill_switch():
     send_command(command=400, param2=21196) #force disarm
 
-async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=False, timeout_descend=TIMEOUT_DESCEND):
+async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=False, timeout_descend=TIMEOUT_DESCEND, interrupter=INTERRUPTER):
     time_start = time.time()
     while True:
+        if interrupter.is_set():
+            logger.warning("Force land interrupted")
+            break
         if descend:
             logger.info("Descending to: | z: {:.3f}".format(0))
             # print("Descending to: | z: {:.3f}".format(z))
@@ -99,9 +102,10 @@ async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=Fal
                 timeout=timeout_descend,
                 freq=freq,
                 yaw=float("nan"),  # TODO yaw
+                interrupter=interrupter
             )
         try:
-            dist = rospy.wait_for_message('rangefinder/range', Range, 30).range
+            dist = rospy.wait_for_message('rangefinder/range', Range, 1).range
         except ROSException: 
             logger.warning(
                     "Waiting rangefinder timed out! | time: 5 seconds"

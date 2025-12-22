@@ -43,3 +43,12 @@ def file_trans(destination: str, data: bytes):
         return True, "success"
     except Exception as e:
         return False, str(*(e.args))
+
+
+def upload_animation(data: str):
+    try:
+        with open("animations/animation.axsanim", "w") as f:
+            f.write(data)
+        return True, "success"
+    except Exception as e:
+        return False, str(*(e.args))

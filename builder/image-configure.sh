@@ -24,7 +24,8 @@ echo_stamp() {
 
 # rename wifi ssid
 sed -i "s/NEW_SSID='clover/NEW_SSID='AXSHOW/" /root/init_rpi.sh
-# add axsho_client to autostart
+sed -i "s/psk=\"cloverwifi/psk=\"copterwifi/" /root/init_rpi.sh
+# add axshow_client to autostart
 systemctl enable axshow_client
 # add sudoers variables to make sudo works with ros (for led strip)
 grep -qxF 'Defaults        env_keep += "ROS_LOG_DIR"' /etc/sudoers || cat << EOT >> /etc/sudoers
