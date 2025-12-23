@@ -1,7 +1,8 @@
+import enum
 from loguru import logger
 from typing_extensions import Tuple
-from led_msgs.msg import LEDStateArray
 try:
+    from led_msgs.msg import LEDStateArray
     import rospy # type: ignore
     from clover.srv import SetLEDEffect # type: ignore
 
@@ -11,6 +12,15 @@ except ImportError:
 
     set_effect_service = faker.set_effect_service
 
+class LEDEffects(enum.Enum):
+    FILL = 'fill'
+    BLINK = 'blink'
+    BLINK_FAST = 'blink_fast'
+    FADE = 'fade'
+    WIPE = 'wipe'
+    FLASH = 'flash'
+    RAINBOW = 'rainbow'
+    RAINBOW_FILL = 'rainbow_fill'
 
 def set_effect(*args, **kwargs) -> Tuple[bool, str]:
     try:
@@ -25,4 +35,4 @@ def get_color() -> Tuple[int, int, int]:
         led = rospy.wait_for_message('led/state', LEDStateArray, timeout=0.1).leds[0]
         return led.r, led.g, led.b
     except Exception:
-        return 0, 0, 0
+        return faker.data.r, faker.data.g, faker.data.b

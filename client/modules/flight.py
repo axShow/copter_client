@@ -8,10 +8,10 @@ import threading
 from loguru import logger
 from typing_extensions import Tuple
 
-from rospy import ROSException
 
 try:
     import rospy # type: ignore
+    from rospy import ROSException
     from clover import srv # type: ignore
     from mavros_msgs.srv import SetMode # type: ignore
     from mavros_msgs.srv import CommandBool # type: ignore
@@ -70,7 +70,8 @@ FRAME_ID = "map"
 INTERRUPTER = threading.Event()
 FLIP_MIN_Z = 0.5
 KILL_Z = 0.15
-
+last_action = "IDLE"
+home_point = None
 checklist = []
 get_telemetry_lock = threading.Lock()
 delta = 0.0
@@ -82,6 +83,11 @@ def get_telemetry_locked(*args, **kwargs):
 
 
 def arming_wrapper(state=False, *args, **kwargs):
+    global last_action
+    if state:
+        last_action = "MOTORS"
+    else:
+        last_action = "IDLE"
     arming(state)
 
 
@@ -90,6 +96,8 @@ def kill_switch():
 
 async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=False, timeout_descend=TIMEOUT_DESCEND, interrupter=INTERRUPTER):
     time_start = time.time()
+    global last_action
+    last_action = "LANDING"
     while True:
         if interrupter.is_set():
             logger.warning("Force land interrupted")
@@ -110,10 +118,12 @@ async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=Fal
             logger.warning(
                     "Waiting rangefinder timed out! | time: 5 seconds"
                 )
+            last_action = "IDLE"
             return False, "Rangefinder timeout"
         if dist <= kill_z:
             logger.warning(f"Force disarming! | z: {dist:.3f}")
             kill_switch()
+            last_action = "IDLE"
             return True, "success"
 
         time_passed = time.time() - time_start
@@ -124,6 +134,7 @@ async def force_land(kill_z=KILL_Z, timeout=TIMEOUT, freq=FREQUENCY, descend=Fal
                         time_passed
                     )
                 )
+                last_action = "IDLE"
                 return False, "Force land timeout"
 
         await asyncio.sleep(1/freq)
@@ -309,6 +320,8 @@ async def land(
     freq=FREQUENCY,
     interrupter=INTERRUPTER,
 ) -> Tuple[bool, str]:
+    global last_action
+    last_action = "LANDING"
     reset_delta()
     if descend:
         logger.info("Descending to: | z: {:.3f}".format(z))
@@ -333,6 +346,7 @@ async def land(
             logger.warning("Land function interrupted!")
             # print("Land function interrupted!")
             interrupter.clear()
+            last_action = "IDLE"
             return False, "interrupted"
 
         telemetry = get_telemetry_locked(frame_id=frame_id_land)
@@ -348,11 +362,13 @@ async def land(
                 logger.warning("Disarming!")
                 # print("Landing timed out, disarming!!!")
                 arming(False)
+                last_action = "IDLE"
                 return False, "timeout"
         await asyncio.sleep(1 / freq)
 
     logger.info("Landing succeeded!")
     # print("Landing succeeded!")
+    last_action = "IDLE"
     return True, "success"
 
 
@@ -365,6 +381,8 @@ async def takeoff(
     interrupter=INTERRUPTER,
     emergency_land=False,
 ) -> Tuple[bool, str]:
+    global last_action, home_point
+    last_action = "TAKEOFF"
     logger.info("Takeoff started...")
     # rate = rospy.Rate(FREQUENCY)
     start = get_telemetry_locked(frame_id=frame_id)
@@ -375,6 +393,7 @@ async def takeoff(
     )
     # rospy.loginfo(result)
     if not result: #TODO: return to using result.success:
+        last_action = "IDLE"
         return False, "not armed"
     # rospy.logdebug(result)
     logger.info("Takeoff to {:.2f} of {:.2f} meters".format(climb, height))
@@ -382,6 +401,7 @@ async def takeoff(
         if interrupter.is_set():
             logger.warning("Flight function interrupted!")
             interrupter.clear()
+            last_action = "IDLE"
             return False, "interrupted"
 
         climb = abs(get_telemetry_locked(frame_id=frame_id).z - start.z)
@@ -393,6 +413,7 @@ async def takeoff(
                 logger.info(
                     "Takeoff timed out! | time: {:3f} seconds".format(time_passed)
                 )
+                last_action = "IDLE"
                 if emergency_land:
                     land(descend=False, interrupter=interrupter)
                 return False, "timeout"
@@ -400,6 +421,9 @@ async def takeoff(
         # rate.sleep()
         await asyncio.sleep(1 / FREQUENCY)
     logger.info("Takeoff succeeded!")
+    last_action = "IDLE"
+    telem = get_telemetry_locked(frame_id="map")
+    home_point = (telem.x, telem.y, telem.z)
     return True, "success"
 
 

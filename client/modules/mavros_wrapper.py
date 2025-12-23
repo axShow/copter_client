@@ -1,17 +1,25 @@
-import rospy
+
 import time
 import logging
-from mavros_msgs.srv import CommandLong
-from mavros_msgs.srv import ParamGet, ParamSet
-from mavros_msgs.msg import State, ParamValue, Altitude
-from std_msgs.msg import Float64
-from pymavlink.dialects.v20 import common as mavlink
+try:
+    fake = False
+    import rospy
+    from mavros_msgs.srv import CommandLong
+    from mavros_msgs.srv import ParamGet, ParamSet
+    from mavros_msgs.msg import State, ParamValue, Altitude
+    from std_msgs.msg import Float64
+    from pymavlink.dialects.v20 import common as mavlink
+
+    send_command_long = rospy.ServiceProxy('/mavros/cmd/command', CommandLong)
+    get_param = rospy.ServiceProxy('/mavros/param/get', ParamGet)
+    set_param = rospy.ServiceProxy('/mavros/param/set', ParamSet)
+except ImportError:
+    from pymavlink.dialects.v20 import common as mavlink
+    fake = True
+    import random
 
 from loguru import logger
 
-send_command_long = rospy.ServiceProxy('/mavros/cmd/command', CommandLong)
-get_param = rospy.ServiceProxy('/mavros/param/get', ParamGet)
-set_param = rospy.ServiceProxy('/mavros/param/set', ParamSet)
 system_status = -1
 heartbeat_sub = None
 heartbeat_sub_status = None
@@ -98,23 +106,29 @@ def get_calibration_status():
         status_text = status_text[:-2]
     return status_text
 
+status_text = {
+    mavlink.MAV_STATE_UNINIT: "UNINIT",
+    mavlink.MAV_STATE_BOOT: "BOOT",
+    mavlink.MAV_STATE_CALIBRATING: "CALIBRATING",
+    mavlink.MAV_STATE_STANDBY: "STANDBY",
+    mavlink.MAV_STATE_ACTIVE: "ACTIVE",
+    mavlink.MAV_STATE_CRITICAL: "CRITICAL",
+    mavlink.MAV_STATE_EMERGENCY: "EMERGENCY",
+    mavlink.MAV_STATE_POWEROFF: "POWEROFF",
+    mavlink.MAV_STATE_FLIGHT_TERMINATION: "TERMINATION"
+}
 def get_sys_status():
     global system_status
-    if check_state_topic():
-        status_text = {
-            mavlink.MAV_STATE_UNINIT: "UNINIT",
-            mavlink.MAV_STATE_BOOT: "BOOT",
-            mavlink.MAV_STATE_CALIBRATING: "CALIBRATING",
-            mavlink.MAV_STATE_STANDBY: "STANDBY",
-            mavlink.MAV_STATE_ACTIVE: "ACTIVE",
-            mavlink.MAV_STATE_CRITICAL: "CRITICAL",
-            mavlink.MAV_STATE_EMERGENCY: "EMERGENCY",
-            mavlink.MAV_STATE_POWEROFF: "POWEROFF",
-            mavlink.MAV_STATE_FLIGHT_TERMINATION: "TERMINATION"
-        }.get(system_status, "NO_FCU")
-        return status_text
+    if fake or check_state_topic():
+        if fake: system_status = random.choice(list(status_text.keys()))
+        return status_text.get(system_status, "NO_FCU")
     return "NO_FCU"
-
+# def get_state():
+#     global system_status
+#     if fake or check_state_topic():
+#         if fake: system_status = random.choice(list(status_text.keys()))
+#         return system_status
+#     return -1
 def start_subscriber():
     global heartbeat_sub, heartbeat_sub_status
     heartbeat_sub = rospy.Subscriber('/mavros/state', State, state_callback)

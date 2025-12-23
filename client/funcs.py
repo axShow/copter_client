@@ -1,286 +1,184 @@
+from typing_extensions import Literal, Union
+from copterData import TuneParams
 from modules.animation_processor import run_animation
 from modules.animation_processor import INTERRUPTER as show_interrupter
 from modules.flight import *
 from modules import led, setup
 from modules.other import *
 from modules.setup import connect_wifi, get_tune_params, set_tune_params, generate_aruco_map
-from functools import wraps
-import connector
-# async def proccess(method: str, args: dict) -> dict:
-#     if method == "land":
-#         # ARGS:
-#         # descend = (True,)
-#         # z = (Z_DESCEND,)
-#         # frame_id_descend = (FRAME_ID,)
-#         # frame_id_land = (FRAME_ID,)
-#         # timeout_descend = (TIMEOUT_DESCEND,)
-#         # timeout_land = (TIMEOUT_LAND,)
-#         # freq = (FREQUENCY,)
-#         # interrupter = INTERRUPTER
-#         res, details = await land(**args)
-#         return {"result": res, "details": details}
-#     elif method == "emergency_land":
-#         # ARGS:
-#         # descend = (True,)
-#         # z = (Z_DESCEND,)
-#         # frame_id_descend = (FRAME_ID,)
-#         # frame_id_land = (FRAME_ID,)
-#         # timeout_descend = (TIMEOUT_DESCEND,)
-#         # timeout_land = (TIMEOUT_LAND,)
-#         # freq = (FREQUENCY,)
-#         # interrupter = INTERRUPTER
-#         res = emergency_land(**args)
-#         return {"result": True, "details": str(res)}
-#     elif method == "takeoff":
-#         # ARGS
-#         # height = (TAKEOFF_HEIGHT,)
-#         # speed = (TAKEOFF_SPEED,)
-#         # tolerance = (TOLERANCE,)
-#         # frame_id = (FRAME_ID,)
-#         # timeout_takeoff = (TIMEOUT,)
-#         # interrupter = (INTERRUPTER,)
-#         # emergency_land = (False,)
-#         res, details = await takeoff(**args)
-#         return {"result": res, "details": details}
-#     elif method == "led":
-#         # ARGS
-#         # r 0-255
-#         # g 0-255
-#         # b 0-255
-#         # effect =
-#         # fill (или пустая строка) – залить всю ленту цветом;
-#         # blink – мигание цветом;
-#         # blink_fast – ускоренное мигание цветом;
-#         # fade – плавное перетекание в цвет;
-#         # wipe – "надвигание" нового цвета;
-#         # flash – быстро мигнуть цветом 2 раза и вернуться к предыдущему эффекту;
-#         # rainbow – переливание ленты цветами радуги;
-#         # rainbow_fill – переливать заливку по цветам радуги.
-#         res, details = led.set_effect(**args)
-#         return {"result": res, "details": details}
-#     elif method == "setup":
-#         # optical_flow: bool = (False,)
-#         # rangefinder: bool = (False,)
-#         # enable_aruco: bool = (True,)
-#         # cam_direction: Literal["backward", "forward"] = "backward"
-#         # setup_flight_controller: bool = False
-#         setup.run_setup(**args)
-#         return {"result": True, "details": "Unknown"}
-#     elif method == "set_arming":
-#         # state: bool
-#         arming_wrapper(**args)
-#         return {"result": True, "details": "Unknown"}
-#     elif method == "flip":
-#         # min_z: float
-#         # frame_id
-#         res, details = await flip(**args)
-#         return {"result": res, "details": details}
-#     elif method == "calibrate_gyro":
-#         details = calibrate_gyro()
-#         return {"result": True, "details": details}
-#     elif method == "calibrate_level":
-#         details = calibrate_level()
-#         return {"result": True, "details": details}
-#     elif method == "file_transfer":
-#         # ARGS
-#         # destination: str
-#         # data: bytes
-#         file_trans(**args)
-#     elif method == "connect_wifi":
-#         # ARGS
-#         # ssid: str
-#         # password: str
-#         # hostname: str
-#         connect_wifi(**args)
-#         return {"result": True, "details": "connecting"}
-#     elif method == "generate_map":
-#         # ARGS
-#         # size: float
-#         # dist_x: float
-#         # dist_y: float
-#         # x_num: int
-#         # y_num: int
-#         # bottom_left: bool
-#         # start_id: int
-#         pass
-#     elif method == "reboot_fcu":
-#         reboot_fcu()
-#         return {"result": True, "details": "success"}
-#     elif method == "reboot_system":
-#         reboot_system()
-#         return {"result": True, "details": "success"}
-#     elif method == "restart_client":
-#         restart_service()
-#         return {"result": True, "details": "success"}
-#     elif method == "restart_clover":
-#         restart_clover()
-#         return {"result": True, "details": "success"}
-#     elif method == "kill_client":
-#         stop_service()
-#         return {"result": True, "details": "success"}
-#     elif method == "self_check":
-#         selfcheck()
-#         return {"result": True, "details": "success"}
-#     elif method == "get_tune_params":
-#         values = get_tune_params()
-#         return {"result": True, "details": "success", "payload": values.model_dump()}
-#     elif method == "set_tune_params":
-#         result = set_tune_params(args)
-#         return {"result": result, "details": "Unknown"}
-#     else:
-#         return {"result": False, "details": "command not found"}
+from fastapi import APIRouter, UploadFile
 
 
 functions = {}
 
-
-def command(alias=None):
-    def decorator(func):
-        @wraps(func)  # Preserves original function metadata
-        async def wrapper(*args, **kwargs):
-            return await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
-
-        wrapper.original_func = func
-        functions[alias if alias else func.__name__] = wrapper
-        return wrapper
-
-    return decorator
+router = APIRouter()
 
 
-@command(alias="land")
-async def land_wrap(args: dict):
-    res, details = await land(**args)
+@router.post("/land")
+async def land_wrap(descend=True,
+    z=Z_DESCEND):
+    res, details = await land(descend=descend, z=z)
     return {"result": res, "details": details}
 
 
-@command(alias="takeoff")
-async def takeoff_wrap(args: dict):
-    res, details = await takeoff(**args)
+@router.post("/takeoff")
+async def takeoff_wrap(height=TAKEOFF_HEIGHT,
+    speed=TAKEOFF_SPEED,):
+    res, details = await takeoff(height=height, speed=speed)
     return {"result": res, "details": details}
 
 
-@command(alias="led")
-async def led_wrapper(args: dict):
-    res, details = led.set_effect(**args)
+@router.post("/rth")
+async def rth_wrap(height=None):
+    res, details = await reach_point(x=home_point[0], y=home_point[1], z=height if height is not None else home_point[2],
+        frame_id="map")
     return {"result": res, "details": details}
 
 
-@command()
-async def setup(args: dict):
-    setup.run_setup(**args)
-    return {"result": True, "details": "Unknown"}
-
-
-@command()
-async def set_arming(args: dict):
-    arming_wrapper(**args)
-    return {"result": True, "details": "Unknown"}
-
-
-@command(alias="flip")
-async def flip_wrapper(args: dict):
-    res, details = await flip(**args)
+@router.post("/led")
+async def led_wrapper(r: int = 0, g: int = 0, b: int = 0,
+    effect: led.LEDEffects = led.LEDEffects.FILL):
+    res, details = led.set_effect(r=r, g=g, b=b, effect=effect)
+    logger.info(f"LED set to {r}, {g}, {b} with effect {effect}")   
     return {"result": res, "details": details}
 
 
-@command(alias="calibrate_gyro")
-async def calibrate_gyro_wrapper(args: dict):
+@router.post("/setup")
+async def setup(optical_flow: bool = False,
+    rangefinder: bool = False,
+    enable_aruco: bool = True,
+    cam_direction: Literal["backward", "forward"] = "backward",
+    setup_flight_controller: bool = False):
+    setup.run_setup(optical_flow=optical_flow,
+                    rangefinder=rangefinder,
+                    enable_aruco=enable_aruco,
+                    cam_direction=cam_direction,
+                    setup_flight_controller=setup_flight_controller)
+    return {"result": True, "details": "success"}
+
+
+@router.post("/set_arming")
+async def set_arming(state: bool):
+    arming_wrapper(state=state)
+    return {"result": True, "details": "success"}
+
+@router.post("/kill_switch")
+async def kill_switch():
+    await kill_switch()
+    return {"result": True, "details": "success"}
+
+
+@router.post("/flip")
+async def flip_wrapper(min_z=FLIP_MIN_Z):
+    res, details = await flip(min_z=min_z)
+    return {"result": res, "details": details}
+
+
+@router.post("/calibrate_gyro")
+async def calibrate_gyro_wrapper():
     details = calibrate_gyro()
     return {"result": True, "details": details}
 
 
-@command(alias="calibrate_level")
-async def calibrate_level_wrapper(args: dict):
+@router.post("/calibrate_level")
+async def calibrate_level_wrapper():
     details = calibrate_level()
     return {"result": True, "details": details}
 
 
-@command(alias="file_transfer")
-async def file_transfer_wrapper(args: dict):
-    file_trans(**args)
-
-
-@command(alias="upload_animation")
-async def upload_animation_wrapper(args: dict):
-    result = upload_animation(**args)
-    return {"result": result[0], "details": result[1]}
-
-
-@command(alias="connect_wifi")
-async def connect_wifi_wrapper(args: dict):
-    connect_wifi(**args)
-    return {"result": True, "details": "connecting"}
-
-
-@command()
-async def generate_map(args: dict):
-    generate_aruco_map(**args)
+@router.post("/file_transfer")
+async def file_transfer_wrapper(destination: str, file: UploadFile):
+    contents = await file.read()
+    file_transfer(destination=destination, data=contents)
     return {"result": True, "details": "success"}
 
 
-@command(alias="reboot_fcu")
-async def reboot_fcu_wrapper(args: dict):
+@router.post("/upload_animation")
+async def upload_animation_wrapper(file: UploadFile):
+    contents = await file.read()
+    result = upload_animation(data=contents.decode("utf-8"))
+    return {"result": result[0], "details": result[1]}
+
+
+@router.post("/connect_wifi")
+async def connect_wifi_wrapper(ssid: str, password: str, hostname: Union[str, None] = None):
+    connect_wifi(ssid=ssid, password=password, hostname=hostname)
+    return {"result": True, "details": "connecting"}
+
+
+@router.post("/generate_aruco_map")
+async def generate_map(length: float = 0.3,
+                 first: int = 0,
+                 markers_x: int = 2,
+                 markers_y: int = 2,
+                 dist_x: int = 1,
+                 dist_y: int = 1,
+                 bottom_left: bool = False):
+    generate_aruco_map(length=length,
+                       first=first,
+                       markers_x=markers_x,
+                       markers_y=markers_y,
+                       dist_x=dist_x,
+                       dist_y=dist_y,
+                       bottom_left=bottom_left)
+    return {"result": True, "details": "success"}
+
+
+@router.post("/reboot_fcu")
+async def reboot_fcu_wrapper():
     reboot_fcu()
     return {"result": True, "details": "success"}
 
 
-@command(alias="reboot_system")
-async def reboot_system_wrapper(args: dict):
+@router.post("/reboot_system")
+async def reboot_system_wrapper():
     reboot_system()
     return {"result": True, "details": "success"}
 
 
-@command()
-async def restart_client(args: dict):
+@router.post("/restart_service")
+async def restart_service_wrapper():
     restart_service()
     return {"result": True, "details": "success"}
 
 
-@command(alias="restart_clover")
-async def restart_clover_wrapper(args: dict):
+@router.post("/restart_clover")
+async def restart_clover_wrapper():
     restart_clover()
     return {"result": True, "details": "success"}
 
 
-@command()
-async def kill_client(args: dict):
+@router.post("/kill_client")
+async def kill_client_wrapper():
     stop_service()
     return {"result": True, "details": "success"}
 
 
-@command()
-async def self_check(args: dict):
-    selfcheck()
+# @command()
+# async def self_check(args: dict):
+#     selfcheck()
+#     return {"result": True, "details": "success"}
+
+
+@router.post("/run_show")
+async def run_show(start_ts, offset):
+    await run_animation(start_ts=start_ts, offset=offset)
     return {"result": True, "details": "success"}
 
 
-@command()
-async def run_show(args: dict):
-    await run_animation(**args, offset=connector.time_offset)
-    return {"result": True, "details": "success"}
-
-
-@command(alias="get_tune_params")
-async def get_tune_params_wrapper(args: dict):
+@router.get("/tune_params", response_model=TuneParams)
+async def get_tune_params_wrapper():
     values = get_tune_params()
-    return {"result": True, "details": "success", "payload": values.model_dump()}
+    return values
 
 
-@command(alias="set_tune_params")
-async def set_tune_params_wrapper(args: dict):
-    result = set_tune_params(args)
-    return {"result": result, "details": "Unknown"}
+@router.post("/tune_params")
+async def set_tune_params_wrapper(params: TuneParams):
+    result = set_tune_params(params)
+    return {"result": result, "details": "success" if result else "failed"}
 
 
-@command()
-async def interrupt_show(args: dict):
+@router.post("/interrupt_show")
+async def interrupt_show():
     show_interrupter.set()
-    return {"result": True, "details": "Unknown command"}
-
-@command()
-async def default(args: dict):
-    return {"result": False, "details": "Unknown command"}
-
-
-async def execute_method(method: str, args: dict) -> dict:
-    return await functions.get(method, default)(args)
+    return {"result": True, "details": "success"}

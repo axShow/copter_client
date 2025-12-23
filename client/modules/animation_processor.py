@@ -24,7 +24,7 @@ async def run_animation(start_ts, offset):
     await asyncio.sleep(delay/1000)
     for frame in anim.frames:
         if INTERRUPTER.is_set():
-            logger.warning
+            logger.warning("Animation interrupted")
             break
 
         if frame.action == "land":

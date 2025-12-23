@@ -36,7 +36,7 @@ def calibrate_level() -> str:
     return mavros.get_calibration_status()
 
 
-def file_trans(destination: str, data: bytes):
+def file_transfer(destination: str, data: bytes):
     try:
         with open(destination, "wb") as f:
             f.write(data)

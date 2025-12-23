@@ -28,7 +28,7 @@ try:
     param_get = rospy.ServiceProxy("mavros/param/get", ParamGet)
 except ImportError:
     from faker import param_get, param_set
-    from faker import ParamValueFake as ParamValue
+    from faker import ValueFake as ParamValue
 
 
 def connect_wifi(ssid: str, password: str, hostname: Union[str, None]):
@@ -117,8 +117,7 @@ def get_tune_params():
     lpe_fusion = LPEFusion.fromInt(lpe_int)
     return TuneParams(lpe_fusion=lpe_fusion, coefficients=coefficients)
 
-def set_tune_params(tune_params_dict: dict):
-    tune_params = TuneParams.model_validate(tune_params_dict)
+def set_tune_params(tune_params: TuneParams):
     coefficients = tune_params.coefficients.model_dump()
     lpe_int = LPEFusion.asInt(tune_params.lpe_fusion)
     for param_id, param_value in coefficients.items():

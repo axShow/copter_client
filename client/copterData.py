@@ -1,8 +1,6 @@
 from enum import Enum
 from typing_extensions import Union, Tuple
-
 from pydantic import BaseModel, Field
-
 class Coefficients(BaseModel):
     MC_ROLLRATE_P: float
     MC_ROLLRATE_I: float
@@ -44,37 +42,25 @@ class LPEFusion(BaseModel):
 class TuneParams(BaseModel):
     lpe_fusion: LPEFusion
     coefficients: Coefficients
-class Heartbeat(BaseModel):
-    type: str = Field("Heartbeat")
-    timestamp: int = Field()
 
-class Receive(BaseModel):
-    type: str = Field()
+class DroneState(Enum):
+    OPERATIONAL = "OPRN"
+    BUSY = "BUSY"
+    EMERGENCY = "EMRG"
+    WARN = "WARN"
 
 class CopterData(BaseModel):
-    type: str = Field("Info")
     name: str
     battery: float
     flight_mode: str
-    controller_state: str
+    status: str
+    state: DroneState
     x: float
     y: float
     z: float
     color: Tuple[int, int, int]
 
-
-class Query(BaseModel):
-    type: str = Field("Query")
-    id: int
-    method_name: str
-    args: dict
-
-
-class Response(BaseModel):
-    type: str = Field("Response")
-    id: int
-    result: dict
-
+    
 
 class FlightMode(Enum):
     MANUAL = "MANUAL"
@@ -109,3 +95,7 @@ class TelemetryData(BaseModel):
     z: float = Field(0)
 
     mode: FlightMode
+
+    r: int = Field(0)
+    g: int = Field(0)
+    b: int = Field(0)
