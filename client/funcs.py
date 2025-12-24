@@ -38,7 +38,7 @@ async def rth_wrap(height=None):
 @router.post("/led")
 async def led_wrapper(r: int = 0, g: int = 0, b: int = 0,
     effect: led.LEDEffects = led.LEDEffects.FILL):
-    res, details = led.set_effect(r=r, g=g, b=b, effect=effect)
+    res, details = led.set_effect(r=r, g=g, b=b, effect=effect.value)
     logger.info(f"LED set to {r}, {g}, {b} with effect {effect}")   
     return {"result": res, "details": details}
 
@@ -63,8 +63,8 @@ async def set_arming(state: bool):
     return {"result": True, "details": "success"}
 
 @router.post("/kill_switch")
-async def kill_switch():
-    await kill_switch()
+async def kill_switch_wrapper():
+    kill_switch()
     return {"result": True, "details": "success"}
 
 
